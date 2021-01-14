@@ -1,0 +1,113 @@
+﻿  <mah:MetroWindow x:Class="LocalImageViewer.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+                 xmlns:ex="clr-namespace:YiSA.Markup.ControlEx;assembly=YiSA.Markup"
+                 xmlns:controls="clr-namespace:YiSA.WPF.Controls;assembly=YiSA.WPF.MvvmFramework"
+                 xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+                 xmlns:localImageVIewer="clr-namespace:LocalImageViewer"
+                 d:DataContext="{d:DesignInstance localImageVIewer:MainWindowVm}"
+                 x:Name="MainWindowRoot"
+                 Title="Local ImageViewer"
+                 mc:Ignorable="d">
+    <Grid ex:GridEx.RowDef="Auto,*"
+          ex:GridEx.ColmDef="160,*">
+        <WrapPanel ex:GridEx.Area="0,0,2,1">
+            <Menu>
+                <MenuItem Header="メニュー">
+                    <MenuItem Header="インポート"/>
+                    <MenuItem Header="連番ファイルダウンロード" Command="{Binding ShowRenbanEditorCommand}"/>
+                </MenuItem>
+            </Menu>
+        </WrapPanel>
+        
+        <Grid ex:GridEx.Area="0,1,1,1">
+            <StackPanel>
+                <Expander Header="最近のファイル" IsExpanded="True">
+                    <ItemsControl ItemsSource="{Binding Recent }">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel ItemWidth="48" ItemHeight="64"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="Transparent">
+                                    <b:Interaction.Behaviors>
+                                        <localImageVIewer:DoubleClickBehavior 
+                                            d:DataContext="{d:DesignInstance localImageVIewer:MainWindowVm}"
+                                            Command="{Binding DataContext.ShowDocumentCommand ,Source={x:Reference MainWindowRoot}}"/>
+                                    </b:Interaction.Behaviors>
+                   
+                                    <Image Source="{Binding Thumbnail}"  Width="45.25" Height="64"/>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Expander>
+
+                <Expander IsExpanded="True">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <Grid ex:GridEx.ColmDef="*,Auto">
+                                <TextBlock Text="タグ" HorizontalAlignment="Left"/>
+                                <Button HorizontalAlignment="Right"
+                                        Style="{StaticResource IconButtonStyle}">
+                                    <b:Interaction.Behaviors>
+                                        <localImageVIewer:ButtonClickPopupBehavior>
+                                            <localImageVIewer:ButtonClickPopupBehavior.Popup>
+                                                <Popup d:DataContext="{d:DesignInstance localImageVIewer:MainWindowVm}"
+                                                       DataContext="{Binding DataContext , Source={x:Reference MainWindowRoot}}">
+                                                    <localImageVIewer:TextBoxAddButtonControl Command="{Binding AddTagCommand}"/>
+                                                </Popup>
+                                            </localImageVIewer:ButtonClickPopupBehavior.Popup>
+                                        </localImageVIewer:ButtonClickPopupBehavior>
+                                    </b:Interaction.Behaviors>
+                                    <controls:GeometryIcon  Icon="Icon_Plus_solid"/>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+                    <ItemsControl ItemsSource="{Binding Tags}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type localImageVIewer:TagVm}">
+                                <WrapPanel>
+                                    <CheckBox/>
+                                    <TextBlock Text="{Binding DisplayName}"/>
+                                </WrapPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Expander>
+            </StackPanel>
+        </Grid>
+        
+        <ListBox ex:GridEx.Area="1,1,1,1" ItemsSource="{Binding Documents}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel ItemWidth="210" ItemHeight="297"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Background="Transparent">
+                        <b:Interaction.Behaviors>
+                            <localImageVIewer:DoubleClickBehavior 
+                                d:DataContext="{d:DesignInstance localImageVIewer:MainWindowVm}"
+                                Command="{Binding DataContext.ShowDocumentCommand ,Source={x:Reference MainWindowRoot}}"/>
+                        </b:Interaction.Behaviors>
+                        <Border.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="エクスプローラで開く" Command="{Binding ShowWithExplorerCommand}"/>
+                            </ContextMenu>
+                        </Border.ContextMenu>                       
+                        <Image Source="{Binding LargeThumbnailPath}"  Width="210" Height="297"/>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ListBox>
+    </Grid>
+</mah:MetroWindow>

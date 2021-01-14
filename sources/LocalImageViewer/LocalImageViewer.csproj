@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <OutputType>Exe</OutputType>
+        <LangVersion>8</LangVersion>
+        <AssemblyName>LocalImageViewer</AssemblyName>
+        <RootNamespace>LocalImageViewer</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="7.22.3" />
+      <PackageReference Include="MahApps.Metro" Version="2.4.3" />
+      <PackageReference Include="SimpleInjector" Version="5.2.0" />
+      <PackageReference Include="YamlDotNet" Version="9.1.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\sources\YiSA.Markup\YiSA.Markup.csproj" />
+      <ProjectReference Include="..\sources\YiSA.WPF.MvvmFramework\YiSA.WPF.MvvmFramework.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Resource\loading.png" />
+      <Resource Include="Resources\loading.png" />
+    </ItemGroup>
+
+</Project>
