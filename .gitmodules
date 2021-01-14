@@ -1,0 +1,3 @@
+[submodule "sources/external"]
+	path = sources/external
+	url = git@github.com:p4j4dyxcry/YiSA.git
