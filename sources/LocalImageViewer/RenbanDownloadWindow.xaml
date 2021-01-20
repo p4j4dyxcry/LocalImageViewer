@@ -30,7 +30,9 @@
 
                 <WrapPanel>
                     <TextBlock Text="保存名" VerticalAlignment="Center" HorizontalAlignment="Center" Width="80"/>
-                    <TextBox Width="120" Text="{Binding SaveDirectoryName.Value , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                    <TextBox Width="60" Text="{Binding SaveDirectoryName.Value , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                    <TextBlock Text="0埋桁" VerticalAlignment="Center" HorizontalAlignment="Center" Width="35"/>
+                    <TextBox Width="25" Text="{Binding FillZero.Value , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
                 </WrapPanel>
 
             </StackPanel>

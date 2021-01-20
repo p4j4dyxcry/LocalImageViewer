@@ -17,6 +17,8 @@ namespace LocalImageViewer
         public IReactiveProperty<string> Address { get; }
         public IReactiveProperty<int> Start => _renbanDownLoader.Start;
         public IReactiveProperty<int> End => _renbanDownLoader.End;
+        
+        public IReactiveProperty<int> FillZero => _renbanDownLoader.FillZeroCount;
         public IReactiveProperty<string> SaveDirectoryName => _renbanDownLoader.DownloadDirectoryName;
         
         public IReactiveProperty<string> TextInput { get; }
@@ -63,10 +65,11 @@ namespace LocalImageViewer
                 .AddTo(Disposables);
 
             // 各パラメータの更新に併せてダウンロード候補一覧表示を更新する
-            Address.ToUnit()
-                .Merge(TextInput.ToUnit())
-                .Merge(Start.ToUnit())
-                .Merge(End.ToUnit())
+            Observable.Merge(Address.ToUnit(),
+                    TextInput.ToUnit(),
+                    Start.ToUnit(),
+                    End.ToUnit(),
+                    FillZero.ToUnit())
                 .Throttle(TimeSpan.FromMilliseconds(250), UIDispatcherScheduler.Default)
                 .Select(_ =>CreateDownloadCandidate())
                 .Subscribe(x => UrlsPreview.Value = x).AddTo(Disposables);

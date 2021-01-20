@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using Reactive.Bindings;
@@ -20,6 +22,8 @@ namespace LocalImageViewer
         public IReactiveProperty<int> End { get; } = new ReactiveProperty<int>();
         public IReactiveProperty<string> DownloadLogInfo { get; } = new ReactiveProperty<string>();
         public IReactiveProperty<string> DownloadDirectoryName { get; } = new ReactiveProperty<string>(string.Empty);
+
+        public IReactiveProperty<int> FillZeroCount { get; } = new ReactivePropertySlim<int>(0);
         
         public RenbanDownLoader(Project project , Config config)
         {
@@ -162,9 +166,21 @@ namespace LocalImageViewer
 
         public IEnumerable<string> EnumerateDownloadItems(string value)
         {
+            bool fillZero = FillZeroCount.Value > 0;
+            
             for (int i = Start.Value; i < End.Value + 1; i++)
             {
-                yield return value.Replace("*", i.ToString());
+                if(fillZero is false)
+                    yield return value.Replace("*", i.ToString());
+                else
+                {
+                    var formatBuilder = new StringBuilder();
+
+                    for (int j = 0; j < FillZeroCount.Value; ++j)
+                        formatBuilder.Append('0');
+
+                    yield return value.Replace("*", i.ToString(formatBuilder.ToString()));                    
+                }
             }
         }
     }
