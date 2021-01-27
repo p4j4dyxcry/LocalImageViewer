@@ -111,6 +111,7 @@
                             <Button HorizontalAlignment="Right"
                                     BorderThickness="0"
                                     VerticalAlignment="Top"
+                                    Opacity="0.75"
                                     Visibility="{Binding IsMouseOver, 
                                                     RelativeSource={RelativeSource AncestorType=Border} ,
                                                     Converter={ext:TrueToVisible}}">
@@ -139,7 +140,7 @@
                                     </liv:ButtonClickPopupBehavior>
                                 </b:Interaction.Behaviors>
                                 <WrapPanel>
-                                    <controls:GeometryIcon Icon="Icon_Pen_solid" Width="16" Height="16" />
+                                    <controls:GeometryIcon Icon="Icon_Pen_solid" Width="14" Height="16" />
                                     <TextBlock Text="タグ" VerticalAlignment="Center" Margin="4,0,0,0"/>
                                 </WrapPanel>
                             </Button>
