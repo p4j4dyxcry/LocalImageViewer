@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Disposables;
+using System.Windows.Input;
 using Reactive.Bindings;
 using YiSA.Foundation.Common.Extensions;
 using YiSA.WPF.Common;

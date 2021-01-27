@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using YamlDotNet.Serialization;
 
 namespace LocalImageViewer
@@ -8,7 +9,7 @@ namespace LocalImageViewer
         /// <summary>
         /// バージョン
         /// </summary>
-        public Version Version { get; set; } = new Version(1,0,1);
+        public Version Version { get; set; } = new Version(1,0,2);
 
         /// <summary>
         /// プロジェクトディレクトリ(絶対パス)
@@ -34,6 +35,11 @@ namespace LocalImageViewer
         /// タグ
         /// </summary>
         public string[] Tags { get; set; } = Array.Empty<string>();
+
+        /// <summary>
+        /// タグマップ
+        /// </summary>
+        public Dictionary<Guid, string[]> TagMap { get; set; } = new Dictionary<Guid, string[]>();
 
         /// <summary>
         /// 設定ファイルの保存パス

@@ -37,9 +37,16 @@ namespace LocalImageViewer
                     
             // wait & focus
             await Task.Delay(1);
-            window.Show();
-            await Task.Delay(1);
-            window.Focus();
+            if (option.IsModal)
+            {
+                window.ShowDialog();
+            }
+            else
+            {
+                window.Show();
+                await Task.Delay(1);
+                window.Focus();                
+            }
         }
         
         public async void Show<T, TViewModel>(TViewModel dataContext,WindowOpenOption option)
@@ -54,7 +61,10 @@ namespace LocalImageViewer
         public static WindowOpenOption Default { get; } = new WindowOpenOption();
         
         public bool Maximize { get; set; } = false;
+
         public bool AutoFocus { get; set; } = true;
+
+        public bool IsModal { get; set; } = false;
 
         public double Width { get; set; } = -1;
         public double Height { get; set; } = -1;

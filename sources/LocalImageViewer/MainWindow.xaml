@@ -7,8 +7,9 @@
                  xmlns:ex="clr-namespace:YiSA.Markup.ControlEx;assembly=YiSA.Markup"
                  xmlns:controls="clr-namespace:YiSA.WPF.Controls;assembly=YiSA.WPF.MvvmFramework"
                  xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
-                 xmlns:localImageVIewer="clr-namespace:LocalImageViewer"
-                 d:DataContext="{d:DesignInstance localImageVIewer:MainWindowVm}"
+                 xmlns:liv="clr-namespace:LocalImageViewer"
+                 xmlns:ext="clr-namespace:YiSA.Markup.Extension;assembly=YiSA.Markup"
+                 d:DataContext="{d:DesignInstance liv:MainWindowVm}"
                  x:Name="MainWindowRoot"
                  Title="Local ImageViewer"
                  mc:Ignorable="d">
@@ -36,8 +37,8 @@
                             <DataTemplate>
                                 <Border Background="Transparent">
                                     <b:Interaction.Behaviors>
-                                        <localImageVIewer:DoubleClickBehavior 
-                                            d:DataContext="{d:DesignInstance localImageVIewer:MainWindowVm}"
+                                        <liv:DoubleClickBehavior 
+                                            d:DataContext="{d:DesignInstance liv:MainWindowVm}"
                                             Command="{Binding DataContext.ShowDocumentCommand ,Source={x:Reference MainWindowRoot}}"/>
                                     </b:Interaction.Behaviors>
                    
@@ -56,14 +57,14 @@
                                 <Button HorizontalAlignment="Right"
                                         Style="{StaticResource IconButtonStyle}">
                                     <b:Interaction.Behaviors>
-                                        <localImageVIewer:ButtonClickPopupBehavior>
-                                            <localImageVIewer:ButtonClickPopupBehavior.Popup>
-                                                <Popup d:DataContext="{d:DesignInstance localImageVIewer:MainWindowVm}"
+                                        <liv:ButtonClickPopupBehavior>
+                                            <liv:ButtonClickPopupBehavior.Popup>
+                                                <Popup d:DataContext="{d:DesignInstance liv:MainWindowVm}"
                                                        DataContext="{Binding DataContext , Source={x:Reference MainWindowRoot}}">
-                                                    <localImageVIewer:TextBoxAddButtonControl Command="{Binding AddTagCommand}"/>
+                                                    <liv:TextBoxAddButtonControl Command="{Binding AddTagCommand}"/>
                                                 </Popup>
-                                            </localImageVIewer:ButtonClickPopupBehavior.Popup>
-                                        </localImageVIewer:ButtonClickPopupBehavior>
+                                            </liv:ButtonClickPopupBehavior.Popup>
+                                        </liv:ButtonClickPopupBehavior>
                                     </b:Interaction.Behaviors>
                                     <controls:GeometryIcon  Icon="Icon_Plus_solid"/>
                                 </Button>
@@ -72,10 +73,10 @@
                     </Expander.HeaderTemplate>
                     <ItemsControl ItemsSource="{Binding Tags}">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type localImageVIewer:TagVm}">
+                            <DataTemplate DataType="{x:Type liv:TagItemVm}">
                                 <WrapPanel>
-                                    <CheckBox/>
-                                    <TextBlock Text="{Binding DisplayName}"/>
+                                    <CheckBox IsChecked="{Binding IsEnable.Value ,Mode=TwoWay}"
+                                              Content="{Binding Name}"/>
                                 </WrapPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -93,18 +94,57 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Background="Transparent">
+                    <Border x:Name="_border_root" Background="Transparent">
                         <b:Interaction.Behaviors>
-                            <localImageVIewer:DoubleClickBehavior 
-                                d:DataContext="{d:DesignInstance localImageVIewer:MainWindowVm}"
+                            <liv:DoubleClickBehavior 
+                                d:DataContext="{d:DesignInstance liv:MainWindowVm}"
                                 Command="{Binding DataContext.ShowDocumentCommand ,Source={x:Reference MainWindowRoot}}"/>
                         </b:Interaction.Behaviors>
                         <Border.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="エクスプローラで開く" Command="{Binding ShowWithExplorerCommand}"/>
+                                <MenuItem Header="エクスプローラで開く" Command="{Binding ShowWithExplorerCommand}" />
                             </ContextMenu>
-                        </Border.ContextMenu>                       
-                        <Image Source="{Binding LargeThumbnailPath}"  Width="210" Height="297"/>
+                        </Border.ContextMenu>
+                        <Grid>
+                            <Image Source="{Binding LargeThumbnailPath}" Width="210" Height="297" />
+
+                            <Button HorizontalAlignment="Right"
+                                    BorderThickness="0"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding IsMouseOver, 
+                                                    RelativeSource={RelativeSource AncestorType=Border} ,
+                                                    Converter={ext:TrueToVisible}}">
+                                <b:Interaction.Behaviors>
+                                    <liv:ButtonClickPopupBehavior ClosedCommand="{Binding TagEditorVm.ApplyCommand}">
+                                        <liv:ButtonClickPopupBehavior.Popup>
+                                            <Popup d:DataContext="{d:DesignInstance liv:DocumentVm}">
+                                                <ItemsControl
+                                                    Margin="5"
+                                                    DataContext="{Binding TagEditorVm}"
+                                                    ItemsSource="{Binding Tags}" MinWidth="40" MinHeight="18" MaxWidth="280">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <WrapPanel />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox IsChecked="{Binding IsEnable.Value , Mode=TwoWay}"
+                                                                      Content="{Binding Name}" />
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </Popup>
+                                        </liv:ButtonClickPopupBehavior.Popup>
+                                    </liv:ButtonClickPopupBehavior>
+                                </b:Interaction.Behaviors>
+                                <WrapPanel>
+                                    <controls:GeometryIcon Icon="Icon_Pen_solid" Width="16" Height="16" />
+                                    <TextBlock Text="タグ" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                </WrapPanel>
+                            </Button>
+
+                        </Grid>
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

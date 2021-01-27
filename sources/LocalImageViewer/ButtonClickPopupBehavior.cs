@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using Microsoft.Xaml.Behaviors;
 
 namespace LocalImageViewer
@@ -35,6 +36,15 @@ namespace LocalImageViewer
             set => SetValue(PlacementProperty, value);
         }
         
+        public static readonly DependencyProperty ClosedCommandProperty = DependencyProperty.Register(
+            "ClosedCommand", typeof(ICommand), typeof(ButtonClickPopupBehavior), new PropertyMetadata(default(ICommand)));
+
+        public ICommand ClosedCommand
+        {
+            get { return (ICommand) GetValue(ClosedCommandProperty); }
+            set { SetValue(ClosedCommandProperty, value); }
+        }
+        
         protected override void OnAttached()
         {
             base.OnAttached();
@@ -43,12 +53,20 @@ namespace LocalImageViewer
             {
                 binder.Bind(Popup);
             }
-            
+
+            if (Popup is {})
+            {
+                Popup.Closed += (_, __) => ClosedCommand?.Execute(this);                
+            }
+
             // クリックでポップアップさせる
             AssociatedObject.Click += async (s, e) =>
             {
                 if (Popup is {})
                 {
+                    if (Popup.DataContext is null)
+                        Popup.DataContext = AssociatedObject.DataContext;
+                    
                     Popup.PlacementTarget = AssociatedObject;
                     Popup.Placement = Placement;
                     
@@ -58,6 +76,7 @@ namespace LocalImageViewer
                     // 即時呼び出しだと反映されないので意図的に遅延させる
                     await Task.Delay(1);
                     Popup.IsOpen = true;
+                    
                 }
             };
         }

@@ -24,6 +24,7 @@ namespace LocalImageViewer
             container.RegisterSingleton<RenbanDownLoader>();
             container.RegisterSingleton<ThumbnailService>();
             container.RegisterSingleton<IWindowService,WindowService>();
+            container.RegisterSingleton<DocumentOperator>();
             container.RegisterSingleton<MainWindowVm>(); 
             
         #if DEBUG

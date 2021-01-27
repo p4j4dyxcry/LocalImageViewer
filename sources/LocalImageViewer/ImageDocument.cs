@@ -94,7 +94,7 @@ namespace LocalImageViewer
             }
         }
 
-        public string[] Tags()
+        public string[] GetTags()
         {
             return MetaData.Tags;
         }
