@@ -53,6 +53,15 @@ namespace LocalImageViewer
             if(_recent.Count > max)
                 _recent.RemoveAt(max);
         }
+
+        public void ReloadRecent()
+        {
+            var prev = _recent.ToArray();
+            _recent.Clear();
+
+            foreach (var p in prev)
+                _recent.Add(p);
+        }
         
         public void RemoveTag(string tag )
         {

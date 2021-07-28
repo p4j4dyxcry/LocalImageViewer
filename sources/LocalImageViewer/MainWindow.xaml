@@ -22,6 +22,9 @@
                     <MenuItem Header="連番ファイルダウンロード" Command="{Binding ShowRenbanEditorCommand}"/>
                 </MenuItem>
             </Menu>
+            <Button ToolTip="リロード" Width="24" Height="24" Command="{Binding ReloadCommand}">
+                <controls:GeometryIcon Icon="Icon_Sync_Alt_solid"/>
+            </Button>
         </WrapPanel>
         
         <Grid ex:GridEx.Area="0,1,1,1">

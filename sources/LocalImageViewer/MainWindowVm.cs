@@ -24,16 +24,25 @@ namespace LocalImageViewer
         public ReadOnlyReactiveCollection<DocumentVm> Documents { get; }
         public ICommand<string> AddTagCommand { get; }
         public ICommand ShowRenbanEditorCommand { get; }
-        
         public ICommand ShowDocumentCommand { get; }
+        
+        public ICommand ReloadCommand { get; }
         
         public MainWindowVm(ConfigService configService , Project project ,ThumbnailService thumbnailService , IWindowService windowService , DocumentOperator documentOperator , ILogger logger)
         {
             Tags = configService.Tags.ToReadOnlyReactiveCollection(x => new TagItemVm(x,false)).AddTo(Disposables);
             Recent = configService.Recent.ToReadOnlyReactiveCollection(x => new RecentVm(project.Documents.FirstOrDefault(doc=>doc.MetaData.Id == x))).AddTo(Disposables);
             Documents = project.Documents.ToReadOnlyReactiveCollection(x => new DocumentVm(x,documentOperator,thumbnailService)).AddTo(Disposables);
+
+            // ドキュメントの非同期読み込み
+            _ = project.LoadDocumentAsync();
+            project.DocumentLoaded += (s, e) =>
+            {
+                configService.ReloadRecent();
+            };
             
-            AddTagCommand = new DelegateCommand<string>(x => configService.AddTag(x));
+            AddTagCommand = new DelegateCommand<string>(configService.AddTag);
+            ReloadCommand = new DelegateCommand(()=>_ =project.LoadDocumentAsync());
             
             ShowDocumentCommand = new DelegateCommand<object>( args =>
             {

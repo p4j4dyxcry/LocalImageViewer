@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -20,6 +20,8 @@ namespace LocalImageViewer
 
         public ObservableCollection<ImageDocument> Documents { get; }
 
+        public event EventHandler DocumentLoaded;
+
         /// <summary>
         /// ctor
         /// </summary>
@@ -31,7 +33,6 @@ namespace LocalImageViewer
             _logger = logger;
 
             Documents = new ObservableCollection<ImageDocument>();
-            _ = LoadDocumentAsync();
             
             // 破棄時にメタファイルを保存する
             Disposables.Add(Disposable.Create(() =>
@@ -46,7 +47,6 @@ namespace LocalImageViewer
                 }
             }));
         }
-
         /// <summary>
         /// ファイルからメタデータを読み込む
         /// </summary>
@@ -96,19 +96,45 @@ namespace LocalImageViewer
             return true;
         }
 
-        private async Task LoadDocumentAsync()
+        private object _cancelTokenLock = new object();
+        private CancellationTokenSource _tokenSource = null;
+        public async Task LoadDocumentAsync()
         {
-            // ドキュメントデータ一覧をファイルから取得
-            Directory.CreateDirectory(_config.Project);
-            foreach (var directory in Directory.EnumerateDirectories(_config.Project)
-                .OrderByDescending(x=>new FileInfo(x).LastWriteTimeUtc))
+            try
             {
-                if (TryGetDocumentMetaData(directory, out var data))
-                {
-                    await Task.Delay(6);
-                    Documents.Add(new ImageDocument(data,_config));
-                }
+                _tokenSource?.Cancel();
+                _tokenSource = null;
+                Documents.Clear();
             }
+            catch (Exception e)
+            {
+                _logger.Error(e);
+            }
+
+            using (_tokenSource = new CancellationTokenSource())
+            {
+                var token = _tokenSource.Token;
+                // ドキュメントデータ一覧をファイルから取得
+                Directory.CreateDirectory(_config.Project);
+                int index = 0;
+                foreach (var directory in Directory.EnumerateDirectories(_config.Project)
+                    .OrderByDescending(x=>new FileInfo(x).LastWriteTimeUtc))
+                {
+                    if (TryGetDocumentMetaData(directory, out var data))
+                    {
+                        if((index++%3) is 0)
+                            await Task.Delay(1);
+                        
+                        if (token.IsCancellationRequested || _tokenSource is null)
+                            return;
+
+                        Documents.Add(new ImageDocument(data,_config));
+                    }
+                }
+                DocumentLoaded?.Invoke(this,EventArgs.Empty);
+            }
+
+            _tokenSource = null;
         }
     }
 }
