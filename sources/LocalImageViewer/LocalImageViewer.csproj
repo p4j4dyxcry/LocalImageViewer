@@ -7,6 +7,8 @@
         <LangVersion>8</LangVersion>
         <AssemblyName>LocalImageViewer</AssemblyName>
         <RootNamespace>LocalImageViewer</RootNamespace>
+        <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+        <PublishSingleFile>true</PublishSingleFile>
     </PropertyGroup>
 
     <ItemGroup>
