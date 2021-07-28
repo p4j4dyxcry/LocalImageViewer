@@ -11,6 +11,7 @@ using Reactive.Bindings.Extensions;
 using Reactive.Bindings.Helpers;
 using YamlDotNet.Core.Tokens;
 using YiSA.Foundation.Common.Extensions;
+using YiSA.Foundation.Logging;
 using YiSA.WPF.Command;
 using YiSA.WPF.Common;
 
@@ -26,7 +27,7 @@ namespace LocalImageViewer
         
         public ICommand ShowDocumentCommand { get; }
         
-        public MainWindowVm(ConfigService configService , Project project ,ThumbnailService thumbnailService , IWindowService windowService , DocumentOperator documentOperator)
+        public MainWindowVm(ConfigService configService , Project project ,ThumbnailService thumbnailService , IWindowService windowService , DocumentOperator documentOperator , ILogger logger)
         {
             Tags = configService.Tags.ToReadOnlyReactiveCollection(x => new TagItemVm(x,false)).AddTo(Disposables);
             Recent = configService.Recent.ToReadOnlyReactiveCollection(x => new RecentVm(project.Documents.FirstOrDefault(doc=>doc.MetaData.Id == x))).AddTo(Disposables);
@@ -57,7 +58,7 @@ namespace LocalImageViewer
             
             ShowRenbanEditorCommand = new DelegateCommand( () =>
             {
-                var editor = new RenbanDownLoader(project, configService.Config);
+                var editor = new RenbanDownLoader(project, configService.Config,logger);
                 var dataContext = new RenbanVm(editor);
                 windowService.Show<RenbanDownloadWindow,RenbanVm>(dataContext,WindowOpenOption.Default);
             });

@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using SimpleInjector;
+using YiSA.Foundation.Logging;
 
 namespace LocalImageViewer
 {
@@ -16,7 +17,10 @@ namespace LocalImageViewer
 
         private void LaunchMainWindow()
         {
+            var logger = new ApplicationLogger("YlImgV");
+            logger.WriteLine("initialize");
             var container = new Container();
+            container.RegisterSingleton<ILogger>(()=> logger);
             container.RegisterSingleton<ConfigLoader>();
             container.RegisterSingleton<Config>(()=>container.GetInstance<ConfigLoader>().LoadOrCreateConfig());
             container.RegisterSingleton<ConfigService>();

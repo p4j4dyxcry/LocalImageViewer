@@ -3,6 +3,9 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Reactive.Disposables;
+using System.Threading;
+using System.Threading.Tasks;
+using YiSA.Foundation.Logging;
 using YiSA.WPF.Common;
 
 namespace LocalImageViewer
@@ -13,39 +16,35 @@ namespace LocalImageViewer
     public class Project : DisposableBindable
     {
         private readonly Config _config;
-    
+        private readonly ILogger _logger;
+
         public ObservableCollection<ImageDocument> Documents { get; }
-        
+
         /// <summary>
         /// ctor
         /// </summary>
         /// <param name="config"></param>
-        public Project(Config config)
+        /// <param name="logger"></param>
+        public Project(Config config , ILogger logger)
         {
             _config = config;
+            _logger = logger;
 
-            var list = new List<DocumentMetaData>();
-
-            // ドキュメントデータ一覧をファイルから取得
-            Directory.CreateDirectory(_config.Project);
-            foreach (var directory in Directory.EnumerateDirectories(_config.Project))
-            {
-                if(TryGetDocumentMetaData(directory,out var data))
-                    list.Add(data);
-            }
-
-            Documents = new ObservableCollection<ImageDocument>(list.Select(x=>new ImageDocument(x,config)));
+            Documents = new ObservableCollection<ImageDocument>();
+            _ = LoadDocumentAsync();
             
             // 破棄時にメタファイルを保存する
             Disposables.Add(Disposable.Create(() =>
             {
                 foreach (var metaData in Documents.Select(x=>x.MetaData))
                 {
-                    if(metaData.IsEdited)
+                    if (metaData.IsEdited)
+                    {
                         YamlSerializeHelper.SaveToFile(metaData.LatestSavedAbsolutePath,metaData);
+                        _logger.WriteLine($"saved meta data {metaData.LatestSavedAbsolutePath}");
+                    }
                 }
             }));
-            
         }
 
         /// <summary>
@@ -56,6 +55,7 @@ namespace LocalImageViewer
         /// <returns></returns>
         private bool TryGetDocumentMetaData(string absolutePath , out DocumentMetaData documentMetaData)
         {
+            _logger.WriteLine($"load document meta data file {absolutePath}");
             var metaDataFilePath = Path.Combine(absolutePath, "meta.yml");
             if (File.Exists(metaDataFilePath))
             {
@@ -66,7 +66,8 @@ namespace LocalImageViewer
 
                 return true;
             }
-            
+
+            _logger.WriteLine($"not found meta data file {absolutePath}");
             var title = Directory.EnumerateFiles(absolutePath)
                 .OrderBy(x => x, LogicalStringComparer.Instance)
                 .FirstOrDefault(x =>
@@ -91,7 +92,23 @@ namespace LocalImageViewer
                 ProjectAbsolutePath = _config.Project,
                 DirectoryAbsolutePath = absolutePath,
             };
+            _logger.WriteLine($"created meta data {absolutePath}");
             return true;
+        }
+
+        private async Task LoadDocumentAsync()
+        {
+            // ドキュメントデータ一覧をファイルから取得
+            Directory.CreateDirectory(_config.Project);
+            foreach (var directory in Directory.EnumerateDirectories(_config.Project)
+                .OrderByDescending(x=>new FileInfo(x).LastWriteTimeUtc))
+            {
+                if (TryGetDocumentMetaData(directory, out var data))
+                {
+                    await Task.Delay(6);
+                    Documents.Add(new ImageDocument(data,_config));
+                }
+            }
         }
     }
 }

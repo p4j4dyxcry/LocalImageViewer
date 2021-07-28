@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using Reactive.Bindings;
 using YiSA.Foundation.Common;
+using YiSA.Foundation.Logging;
 
 namespace LocalImageViewer
 {
@@ -17,6 +18,7 @@ namespace LocalImageViewer
     {
         private readonly Project _project;
         private readonly Config _config;
+        private readonly ILogger _logger;
         public IReactiveProperty<string> Address { get; } = new ReactiveProperty<string>(string.Empty);
         public IReactiveProperty<int> Start { get; } = new ReactiveProperty<int>(0);
         public IReactiveProperty<int> End { get; } = new ReactiveProperty<int>();
@@ -25,10 +27,11 @@ namespace LocalImageViewer
 
         public IReactiveProperty<int> FillZeroCount { get; } = new ReactivePropertySlim<int>(0);
         
-        public RenbanDownLoader(Project project , Config config)
+        public RenbanDownLoader(Project project , Config config , ILogger logger)
         {
             _project = project;
             _config = config;
+            _logger = logger;
         }
 
         public async Task DownLoad(params string[] uris)
@@ -42,6 +45,7 @@ namespace LocalImageViewer
                 dir = Guid.NewGuid().ToString();
             var absoluteDir = Path.Combine(_config.Project, dir);
             Directory.CreateDirectory(absoluteDir);
+            _logger.WriteLine($"try create directory {absoluteDir}");
 
             int pageId = 0;
             foreach (var uri in uris)
@@ -58,13 +62,16 @@ namespace LocalImageViewer
                 {
                     try
                     {
+                        _logger.WriteLine($"try download {pageUri}");
                         await client.DownloadFileTaskAsync(new Uri(pageUri),filePath);
                         DownloadLogInfo.Value += $"OK {pageUri}\n";
+                        _logger.WriteLine($"success download {pageUri}");
                         await Task.Delay(50);
                         break;
                     }
-                    catch(Exception )
+                    catch(Exception e)
                     {
+                        _logger.Error(e,$"failed download {pageUri}");
                         FileSystemUtility.TryFileDelete(filePath);
                             
                         DownloadLogInfo.Value += $"Error {pageUri}\n";
@@ -76,13 +83,14 @@ namespace LocalImageViewer
             }
             
             // ダウンロード完了、ドキュメントをメイン画面に追加する
-            _project.Documents.Add(new ImageDocument(new DocumentMetaData()
+            _project.Documents.Insert(0,new ImageDocument(new DocumentMetaData()
             {
                 Type = DocumentTypeHelper.FileExtensionToType(Path.GetExtension(uris[0])),
                 DisplayName = string.Empty,
                 LatestSavedAbsolutePath = Path.Combine(absoluteDir,"meta.yml"),
                 DirectoryAbsolutePath = absoluteDir,
                 ProjectAbsolutePath = _config.Project,
+                IsEdited = true,
             },_config));
         }
 
