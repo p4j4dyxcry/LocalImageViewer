@@ -117,7 +117,7 @@ namespace LocalImageViewer
                 // ドキュメントデータ一覧をファイルから取得
                 Directory.CreateDirectory(_config.Project);
                 int index = 0;
-                foreach (var directory in Directory.EnumerateDirectories(_config.Project)
+                foreach (var directory in Directory.EnumerateDirectories(_config.Project,"*",SearchOption.AllDirectories)
                     .OrderByDescending(x=>new FileInfo(x).LastWriteTimeUtc))
                 {
                     if (TryGetDocumentMetaData(directory, out var data))
