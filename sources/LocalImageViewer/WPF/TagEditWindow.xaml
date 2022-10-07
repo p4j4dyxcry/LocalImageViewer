@@ -1,0 +1,63 @@
+﻿<Window x:Class="LocalImageViewer.WPF.TagEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:viewModel="clr-namespace:LocalImageViewer.ViewModel"
+        xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:wpf="clr-namespace:LocalImageViewer.WPF"
+        d:DataContext="{d:DesignInstance viewModel:TagEditWindowVm}"
+        mc:Ignorable="d"
+        Title="TagEditWindow" Height="840" Width="1280">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <WrapPanel>
+            <CheckBox IsChecked="{Binding IsNoTagOnly.Value}" Content="タグ無しだけ表示"></CheckBox>
+        </WrapPanel>
+        <ListBox ItemsSource="{Binding FilteredDocuments}"
+                 Grid.Row="1"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <b:Interaction.Behaviors>
+                <wpf:LazyLoadBehavior Provider="{Binding DocumentSource}"/>
+            </b:Interaction.Behaviors>
+
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel ItemWidth="250" ItemHeight="100"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="viewModel:DocumentVm">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Image Source="{Binding LargeThumbnailPath}" Width="70" Height="99"/>
+                        <ItemsControl
+                            Grid.Column="1"
+                            Margin="5"
+                            DataContext="{Binding TagEditorVm}"
+                            ItemsSource="{Binding Tags}" MinWidth="40" MinHeight="18" MaxWidth="280">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsEnable.Value , Mode=TwoWay}"
+                                              Width="50"
+                                              Content="{Binding Name}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</Window>

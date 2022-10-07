@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using LocalImageViewer.Service;
 using YamlDotNet.Serialization;
 namespace LocalImageViewer.DataModel
 {
@@ -35,6 +37,8 @@ namespace LocalImageViewer.DataModel
         /// </summary>
         public string[] Tags { get; set; } = Array.Empty<string>();
 
+        public string[] EnabledTags { get; set; } = Array.Empty<string>();
+
         /// <summary>
         /// タグマップ
         /// </summary>
@@ -44,5 +48,17 @@ namespace LocalImageViewer.DataModel
         /// 設定ファイルの保存パス
         /// </summary>
         [YamlIgnore] public string LatestSaveFilePath { get; set; }
+    }
+    
+    public static class ConfigExtensions
+    {
+        public static HashSet<TagData> GetTagDataList(this Config config)
+        {
+            HashSet<string> enabledTags = config.EnabledTags.ToHashSet();
+            return config.Tags.Select(x => new TagData(x)
+            {
+                IsEnabled = enabledTags.Contains(x)
+            }).ToHashSet();
+        }
     }
 }

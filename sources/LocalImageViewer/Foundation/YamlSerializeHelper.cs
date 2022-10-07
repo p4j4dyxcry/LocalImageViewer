@@ -25,7 +25,14 @@ namespace LocalImageViewer.Foundation
 
             var str = serializer.Serialize(value);
 
-            File.WriteAllText(absolutePath, str);          
+            try
+            {
+                File.WriteAllText(absolutePath, str);
+            }
+            catch
+            {
+                // ignore.
+            }
         }
     }
 }

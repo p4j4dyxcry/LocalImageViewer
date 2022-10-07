@@ -7,7 +7,6 @@
                  xmlns:ex="clr-namespace:YiSA.Markup.ControlEx;assembly=YiSA.Markup"
                  xmlns:controls="clr-namespace:YiSA.WPF.Controls;assembly=YiSA.WPF.MvvmFramework"
                  xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
-                 xmlns:liv="clr-namespace:LocalImageViewer"
                  xmlns:ext="clr-namespace:YiSA.Markup.Extension;assembly=YiSA.Markup"
                  xmlns:wpf="clr-namespace:LocalImageViewer.WPF"
                  xmlns:viewModel="clr-namespace:LocalImageViewer.ViewModel"
@@ -22,6 +21,7 @@
                 <MenuItem Header="メニュー">
                     <MenuItem Header="インポート"/>
                     <MenuItem Header="連番ファイルダウンロード" Command="{Binding ShowRenbanEditorCommand}"/>
+                    <MenuItem Header="タグ一括編集" Command="{Binding ShowTagEditorCommand}"/>
                 </MenuItem>
             </Menu>
             <Button ToolTip="リロード" Width="24" Height="24" Command="{Binding ReloadCommand}">
@@ -92,6 +92,9 @@
         
         <ListBox ex:GridEx.Area="1,1,1,1" ItemsSource="{Binding Documents}"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <b:Interaction.Behaviors>
+                <wpf:LazyLoadBehavior Provider="{Binding DocumentSource}"/>
+            </b:Interaction.Behaviors>
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel ItemWidth="210" ItemHeight="297"/>

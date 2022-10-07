@@ -12,9 +12,9 @@ namespace LocalImageViewer.Service
             _configService = configService;
         }
 
-        public TagEditorVm BuildTagVm(ImageDocument document )
+        public TagEditorVm BuildTagVm(ImageDocument document,bool syncTag)
         {
-            return new TagEditorVm(document,_configService);
+            return new TagEditorVm(document,_configService,syncTag);
         }
 
         public void OpenWithExplorer(ImageDocument document)

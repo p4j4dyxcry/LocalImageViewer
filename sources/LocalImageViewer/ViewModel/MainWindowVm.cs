@@ -1,9 +1,13 @@
+using System;
 using System.Linq;
+using System.Reactive.Concurrency;
 using System.Windows.Input;
 using LocalImageViewer.DataModel;
+using LocalImageViewer.Foundation;
 using LocalImageViewer.Service;
 using LocalImageViewer.WPF;
 using Reactive.Bindings;
+using Reactive.Bindings.Extensions;
 using YiSA.Foundation.Common.Extensions;
 using YiSA.Foundation.Logging;
 using YiSA.WPF.Command;
@@ -14,28 +18,44 @@ namespace LocalImageViewer.ViewModel
     {
         public ReadOnlyReactiveCollection<TagItemVm> Tags { get; }
         public ReadOnlyReactiveCollection<RecentVm> Recent { get; }
-        public ReadOnlyReactiveCollection<DocumentVm> Documents { get; }
+        public VirtualCollectionSource<ImageDocument,DocumentVm> DocumentSource { get; }
+
+        public ReadOnlyReactiveCollection<DocumentVm> Documents => DocumentSource.Items;
         public ICommand<string> AddTagCommand { get; }
         public ICommand ShowRenbanEditorCommand { get; }
         public ICommand ShowDocumentCommand { get; }
-        
+        public ICommand ShowTagEditorCommand { get; }
         public ICommand ReloadCommand { get; }
         
-        public MainWindowVm(ConfigService configService , Project project ,ThumbnailService thumbnailService , IWindowService windowService , DocumentOperator documentOperator , ILogger logger)
+        public MainWindowVm(ConfigService configService , Project project ,ThumbnailService thumbnailService , IWindowService windowService , DocumentOperator documentOperator,ImageDocumentFilterService imageDocumentFilterService , ILogger logger)
         {
-            Tags = configService.Tags.ToReadOnlyReactiveCollection(x => new TagItemVm(x,false)).AddTo(Disposables);
-            Recent = configService.Recent.ToReadOnlyReactiveCollection(x => new RecentVm(project.Documents.FirstOrDefault(doc=>doc.MetaData.Id == x))).AddTo(Disposables);
-            Documents = project.Documents.ToReadOnlyReactiveCollection(x => new DocumentVm(x,documentOperator,thumbnailService)).AddTo(Disposables);
-
             // ドキュメントの非同期読み込み
-            _ = project.LoadDocumentAsync();
+            _ = project.LoadDocumentAsync(30);
+
             project.DocumentLoaded += (s, e) =>
             {
                 configService.ReloadRecent();
             };
+
+            DocumentSource = new VirtualCollectionSource<ImageDocument, DocumentVm>(project.DocumentSource,x => new DocumentVm(x, documentOperator, thumbnailService,false),30,DispatcherScheduler.Current);
+            DocumentSource.SetFilter(imageDocumentFilterService.Filter);
+
+            Tags = configService.Tags.ToReadOnlyReactiveCollection(x =>
+            {
+                var result = new TagItemVm(x);
+
+                result.IsEnable.PropertyChangedAsObservable()
+                    .Subscribe( x =>
+                    {
+                        _ = DocumentSource.ResetCollectionAsync();
+                    }).AddTo(Disposables);
+                return result;
+            }).AddTo(Disposables);
             
+            Recent = configService.Recent.ToReadOnlyReactiveCollection(x => new RecentVm(project.Documents.FirstOrDefault(doc=>doc.MetaData.Id == x))).AddTo(Disposables);
+
             AddTagCommand = new DelegateCommand<string>(configService.AddTag);
-            ReloadCommand = new DelegateCommand(()=>_ =project.LoadDocumentAsync());
+            ReloadCommand = new DelegateCommand(()=>_ =project.LoadDocumentAsync(20));
             
             ShowDocumentCommand = new DelegateCommand<object>( args =>
             {
@@ -59,6 +79,12 @@ namespace LocalImageViewer.ViewModel
                     }
                 }
             });
+
+            ShowTagEditorCommand = new DelegateCommand(() =>
+            {
+                TagEditWindowVm vm = new TagEditWindowVm(project.DocumentSource,documentOperator,thumbnailService);
+                windowService.Show<TagEditWindow,TagEditWindowVm>(vm,WindowOpenOption.Default);
+            });
             
             ShowRenbanEditorCommand = new DelegateCommand( () =>
             {
@@ -67,18 +93,5 @@ namespace LocalImageViewer.ViewModel
                 windowService.Show<RenbanDownloadWindow,RenbanVm>(dataContext,WindowOpenOption.Default);
             });
         }
-
-        private bool TagFilter(ImageDocument document)
-        {
-            if (Tags.All(x => x.IsEnable.Value is false))
-            {
-                return true;
-            }
-            return Tags.Where(x => x.IsEnable.Value)
-                       .Any(x => 
-                           document.GetTags()
-                          .Contains(x.Name));
-        }
-        
     }
 }

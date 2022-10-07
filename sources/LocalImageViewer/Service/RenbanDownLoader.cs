@@ -87,7 +87,7 @@ namespace LocalImageViewer.Service
             }
             
             // ダウンロード完了、ドキュメントをメイン画面に追加する
-            _project.Documents.Insert(0,new ImageDocument(new DocumentMetaData()
+            _project.DocumentSource.Insert(0,new ImageDocument(new DocumentMetaData()
             {
                 Type = DocumentTypeHelper.FileExtensionToType(Path.GetExtension(uris[0])),
                 DisplayName = string.Empty,

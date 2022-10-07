@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ImageMagick;
-namespace LocalImageViewer.Service
+namespace LocalImageViewer.Foundation
 {
     /// <summary>
     /// ImageSourceの生成関連のヘルパー

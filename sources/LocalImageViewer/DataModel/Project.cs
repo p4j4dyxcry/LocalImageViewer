@@ -1,5 +1,5 @@
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Disposables;
@@ -17,8 +17,12 @@ namespace LocalImageViewer.DataModel
     {
         private readonly Config _config;
         private readonly ILogger _logger;
+        private readonly SlimLocker _documentLocker = new();
 
-        public ObservableCollection<ImageDocument> Documents { get; }
+        public bool IsLoading => _tokenSource is not null;
+
+        public DataSource<ImageDocument> DocumentSource { get; } = new();
+        public IReadOnlyCollection<ImageDocument> Documents => DocumentSource.Items;
 
         public event EventHandler DocumentLoaded;
 
@@ -32,20 +36,21 @@ namespace LocalImageViewer.DataModel
             _config = config;
             _logger = logger;
 
-            Documents = new ObservableCollection<ImageDocument>();
-            
             // 破棄時にメタファイルを保存する
-            Disposables.Add(Disposable.Create(() =>
+            Disposables.Add(Disposable.Create(SaveDocuments));
+        }
+
+        private void SaveDocuments()
+        {
+            foreach (var metaData in Documents.Select(x=>x.MetaData))
             {
-                foreach (var metaData in Documents.Select(x=>x.MetaData))
+                if (metaData.IsEdited)
                 {
-                    if (metaData.IsEdited)
-                    {
-                        YamlSerializeHelper.SaveToFile(metaData.LatestSavedAbsolutePath,metaData);
-                        _logger.WriteLine($"saved meta data {metaData.LatestSavedAbsolutePath}");
-                    }
+                    YamlSerializeHelper.SaveToFile(metaData.LatestSavedAbsolutePath,metaData);
+                    _logger.WriteLine($"saved meta data {metaData.LatestSavedAbsolutePath}");
                 }
-            }));
+            }
+
         }
         /// <summary>
         /// ファイルからメタデータを読み込む
@@ -68,7 +73,7 @@ namespace LocalImageViewer.DataModel
             }
 
             _logger.WriteLine($"not found meta data file {absolutePath}");
-            var title = Directory.EnumerateFiles(absolutePath)
+            var title = FileSystemEnumerator.EnumerateFiles(absolutePath, true)
                 .OrderBy(x => x, LogicalStringComparer.Instance)
                 .FirstOrDefault(x =>
                 {
@@ -98,13 +103,18 @@ namespace LocalImageViewer.DataModel
 
         private object _cancelTokenLock = new();
         private CancellationTokenSource _tokenSource = null;
-        public async Task LoadDocumentAsync()
+        public async Task LoadDocumentAsync(int initial)
         {
             try
             {
                 _tokenSource?.Cancel();
                 _tokenSource = null;
-                Documents.Clear();
+                if (DocumentSource.SafeList.Any())
+                {
+                    SaveDocuments();
+                    DocumentSource.Clear();
+                }
+
             }
             catch (Exception e)
             {
@@ -113,32 +123,27 @@ namespace LocalImageViewer.DataModel
 
             using (_tokenSource = new CancellationTokenSource())
             {
-                var token = _tokenSource.Token;
-                // ドキュメントデータ一覧をファイルから取得
+                using var _ = _documentLocker.WriteLock();
                 Directory.CreateDirectory(_config.Project);
-                int index = 0;
-                foreach (var directory in Directory.EnumerateDirectories(_config.Project,"*",SearchOption.AllDirectories)
-                    .OrderByDescending(x=>new FileInfo(x).LastWriteTimeUtc))
-                {
-                    if (TryGetDocumentMetaData(directory, out var data))
-                    {
-                        if((index++%3) is 0)
-                        {
-                            await Task.Delay(1);
-                        }
 
-                        if (token.IsCancellationRequested || _tokenSource is null)
-                        {
-                            return;
-                        }
-
-                        Documents.Add(new ImageDocument(data,_config));
-                    }
-                }
+                await DocumentSource.ReadAsync(EnumerateImageDocuments(),initial);
                 DocumentLoaded?.Invoke(this,EventArgs.Empty);
             }
 
             _tokenSource = null;
+        }
+
+        private IEnumerable<ImageDocument> EnumerateImageDocuments()
+        {
+            foreach (var directory in Directory
+                .EnumerateDirectories(_config.Project,"*",SearchOption.AllDirectories)
+                .OrderByDescending(x=>new FileInfo(x).LastWriteTimeUtc))
+            {
+                if (TryGetDocumentMetaData(directory, out var data))
+                {
+                    yield return new ImageDocument(data, _config);
+                }
+            }
         }
     }
 }

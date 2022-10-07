@@ -9,22 +9,40 @@ using YiSA.Foundation.Logging;
 using YiSA.WPF.Common;
 namespace LocalImageViewer.Service
 {
+    public class TagData : Bindable
+    {
+        public TagData(string tag,bool isEnabled = false)
+        {
+            Tag = tag;
+            IsEnabled = isEnabled;
+        }
+        public string Tag { get; }
+
+        private bool _isEnabled;
+        public bool IsEnabled
+        {
+            get => _isEnabled;
+            set => TrySetProperty(ref _isEnabled,value);
+        }
+    }
+    
     public class ConfigService : DisposableHolder
     {
         private readonly Config _config;
         private readonly ILogger _logger;
         private readonly ObservableCollection<Guid> _recent;
-        private readonly ObservableCollection<string> _tags;
+        private readonly ObservableCollection<TagData> _tags;
 
         public Config Config => _config;
         public ReadOnlyReactiveCollection<Guid> Recent { get; }
-        public ReadOnlyReactiveCollection<string> Tags { get; }
+        public ReadOnlyReactiveCollection<TagData> Tags { get; }
 
         public ConfigService(Config config, ILogger logger)
         {
             _config = config;
             _logger = logger;
-            _tags = new ObservableCollection<string>(config.Tags);
+            _tags = new ObservableCollection<TagData>(config.GetTagDataList());
+            
             _recent = new ObservableCollection<Guid>(config.Recent);
 
             Recent = _recent.ToReadOnlyReactiveCollection(x=>x).AddTo(Disposables);
@@ -37,9 +55,9 @@ namespace LocalImageViewer.Service
         public void AddTag(string tag )
         {
             _logger.WriteLine($"add tag {tag}");
-            if (_tags.Contains(tag) is false)
+            if (_tags.Select(x=>x.Tag).Contains(tag) is false)
             {
-                _tags.Add(tag);
+                _tags.Add(new TagData(tag));
             }
         }
         
@@ -70,13 +88,18 @@ namespace LocalImageViewer.Service
         
         public void RemoveTag(string tag )
         {
-            _tags.Remove(tag);
+            var data = _tags.FirstOrDefault(x => x.Tag == tag);
+            if (data is not null)
+            {
+                _tags.Remove(data);
+            }
         }
 
         private void ApplyToConfig()
         {
             Config.Recent = _recent.ToArray();
-            Config.Tags = _tags.ToArray();
+            Config.Tags = _tags.Select(x=>x.Tag).ToArray();
+            Config.EnabledTags = _tags.Where(x => x.IsEnabled).Select(x => x.Tag).ToArray();
         }
     }
 }

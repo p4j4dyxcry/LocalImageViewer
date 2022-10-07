@@ -33,7 +33,13 @@ namespace LocalImageViewer.ViewModel
 
         public string DisplayName { get; }
 
-        public DocumentVm(ImageDocument document,DocumentOperator documentOperator,ThumbnailService thumbnailService)
+        private bool _isVisible = true;
+        public bool IsVisible
+        {
+            get => _isVisible;
+            set => TrySetProperty(ref _isVisible, value);
+        }
+        public DocumentVm(ImageDocument document,DocumentOperator documentOperator,ThumbnailService thumbnailService,bool syncTag)
         {
             Document = document;
             _documentOperator = documentOperator;
@@ -60,7 +66,7 @@ namespace LocalImageViewer.ViewModel
                 _documentOperator.OpenWithExplorer(document);
             });
 
-            TagEditorVm = _documentOperator.BuildTagVm(document)
+            TagEditorVm = _documentOperator.BuildTagVm(document,syncTag)
                 .AddTo(Disposables);
         }
 
@@ -86,6 +92,11 @@ namespace LocalImageViewer.ViewModel
         {
             await _thumbnailService.CreateThumbnail(Document);
             LargeThumbnailPath = Document.LargeThumbnailAbsolutePath;
+        }
+
+        public DocumentVm Clone()
+        {
+            return new DocumentVm(Document, _documentOperator, _thumbnailService,false);
         }
     }
 }

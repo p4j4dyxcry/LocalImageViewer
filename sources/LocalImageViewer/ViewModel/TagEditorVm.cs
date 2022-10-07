@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Windows.Input;
 using LocalImageViewer.DataModel;
@@ -11,15 +11,26 @@ namespace LocalImageViewer.ViewModel
 {
     public class TagEditorVm : DisposableBindable
     {
-        public IEnumerable<TagItemVm> Tags { get; }
+        public ReadOnlyReactiveCollection<TagItemVm> Tags { get; }
         
         public ICommand ApplyCommand { get; }
         
-        public TagEditorVm(ImageDocument imageDocument , ConfigService configService)
+        public TagEditorVm(ImageDocument imageDocument , ConfigService configService,bool autoTagsSync)
         {
             var documentTags = imageDocument.GetTags();
 
-            Tags = configService.Tags.ToReadOnlyReactiveCollection(x => new TagItemVm(x, documentTags.Contains(x)))
+            Tags = configService.Tags.ToReadOnlyReactiveCollection(x =>
+                {
+                    var result = new TagItemVm(new TagData(x.Tag, documentTags.Contains(x.Tag)));
+
+                    if (autoTagsSync)
+                    {
+                        result.PropertyChangedAsObservable()
+                            .Subscribe(x=>ApplyCommand?.Execute(null)).AddTo(Disposables);
+                    }
+
+                    return result;
+                })
                 .AddTo(Disposables);
 
             ApplyCommand = new DelegateCommand(() =>
@@ -38,10 +49,10 @@ namespace LocalImageViewer.ViewModel
         
         public IReactiveProperty<bool> IsEnable { get; }
 
-        public TagItemVm(string tag , bool enabled)
+        public TagItemVm(TagData tagData)
         {
-            Name = tag;
-            IsEnable = new ReactiveProperty<bool>(enabled).AddTo(Disposables);
+            Name = tagData.Tag;
+            IsEnable = tagData.ToReactivePropertyAsSynchronized(x=>x.IsEnabled).AddTo(Disposables);
         }
     }
 }

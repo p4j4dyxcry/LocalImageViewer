@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using LocalImageViewer.Foundation;
@@ -94,9 +95,9 @@ namespace LocalImageViewer.DataModel
             }
         }
 
-        public string[] GetTags()
+        public HashSet<string> GetTags()
         {
-            return MetaData.Tags;
+            return MetaData.Tags.ToHashSet();
         }
 
         public void SetTags(params string[] tags)
