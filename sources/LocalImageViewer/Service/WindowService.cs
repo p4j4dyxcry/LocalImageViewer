@@ -63,7 +63,7 @@ namespace LocalImageViewer.Service
     
     public class WindowOpenOption
     {
-        public static WindowOpenOption Default { get; } = new WindowOpenOption();
+        public static WindowOpenOption Default { get; } = new();
         
         public bool Maximize { get; set; } = false;
 

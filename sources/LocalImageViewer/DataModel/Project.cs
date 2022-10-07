@@ -96,7 +96,7 @@ namespace LocalImageViewer.DataModel
             return true;
         }
 
-        private object _cancelTokenLock = new object();
+        private object _cancelTokenLock = new();
         private CancellationTokenSource _tokenSource = null;
         public async Task LoadDocumentAsync()
         {

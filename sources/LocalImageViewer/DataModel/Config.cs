@@ -8,7 +8,7 @@ namespace LocalImageViewer.DataModel
         /// <summary>
         /// バージョン
         /// </summary>
-        public Version Version { get; set; } = new Version(1,0,2);
+        public Version Version { get; set; } = new(1,0,2);
 
         /// <summary>
         /// プロジェクトディレクトリ(絶対パス)
@@ -38,7 +38,7 @@ namespace LocalImageViewer.DataModel
         /// <summary>
         /// タグマップ
         /// </summary>
-        public Dictionary<Guid, string[]> TagMap { get; set; } = new Dictionary<Guid, string[]>();
+        public Dictionary<Guid, string[]> TagMap { get; set; } = new();
 
         /// <summary>
         /// 設定ファイルの保存パス

@@ -9,7 +9,7 @@ namespace LocalImageViewer.Foundation
         System.Collections.IComparer,
         IComparer<string>
     {
-        public static LogicalStringComparer Instance { get; } = new LogicalStringComparer();
+        public static LogicalStringComparer Instance { get; } = new();
         
         [System.Runtime.InteropServices.DllImport("shlwapi.dll",
             CharSet = System.Runtime.InteropServices.CharSet.Unicode,
