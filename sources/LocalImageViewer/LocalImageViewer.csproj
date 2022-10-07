@@ -1,14 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net6.0-windows</TargetFramework>
         <UseWPF>true</UseWPF>
-        <OutputType>Exe</OutputType>
-        <LangVersion>8</LangVersion>
+        <LangVersion>10</LangVersion>
         <AssemblyName>LocalImageViewer</AssemblyName>
         <RootNamespace>LocalImageViewer</RootNamespace>
-        <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
-        <PublishSingleFile>true</PublishSingleFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -26,6 +23,14 @@
     <ItemGroup>
       <None Remove="Resource\loading.png" />
       <Resource Include="Resources\loading.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ApplicationDefinition Remove="App.xaml" />
+      <ApplicationDefinition Include="WPF\App.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+      </ApplicationDefinition>
     </ItemGroup>
 
 </Project>

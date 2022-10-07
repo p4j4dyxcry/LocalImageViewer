@@ -1,4 +1,5 @@
 using System;
+using LocalImageViewer.Service;
 using Xunit;
 
 namespace LocalImageViewer.UnitTest
