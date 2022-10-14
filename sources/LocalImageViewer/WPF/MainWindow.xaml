@@ -47,7 +47,7 @@
                                             Command="{Binding DataContext.ShowDocumentCommand ,Source={x:Reference MainWindowRoot}}"/>
                                     </b:Interaction.Behaviors>
                    
-                                    <Image Source="{Binding Thumbnail}"  Width="45.25" Height="64"/>
+                                    <Image Source="{Binding Thumbnail,Converter={ext:FileToImage}}"  Width="45.25" Height="64"/>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -114,7 +114,7 @@
                             </ContextMenu>
                         </Border.ContextMenu>
                         <Grid>
-                            <Image Source="{Binding LargeThumbnailPath}" Width="210" Height="297" />
+                            <Image Source="{Binding LargeThumbnailPath,Converter={ext:FileToImage}}" Width="210" Height="297" />
 
                             <Button HorizontalAlignment="Right"
                                     BorderThickness="0"

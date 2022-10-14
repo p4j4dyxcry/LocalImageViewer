@@ -46,25 +46,22 @@ namespace LocalImageViewer.WPF
                     };
                 
                 _disposable = Observable
-                    .FromEventPattern<MouseWheelEventHandler, MouseWheelEventArgs>(
+                    .FromEventPattern<ScrollChangedEventHandler, ScrollChangedEventArgs>(
                         x => OnScrollViewerOnScrollChanged,
-                        x => scrollViewer.PreviewMouseWheel += x,
-                        x => scrollViewer.PreviewMouseWheel -= x)
-                    .Throttle(TimeSpan.FromMilliseconds(50), UIDispatcherScheduler.Default) // 適度に間引く
+                        x => scrollViewer.ScrollChanged += x,
+                        x => scrollViewer.ScrollChanged -= x)
+                    .Throttle(TimeSpan.FromMilliseconds(10), UIDispatcherScheduler.Default) // 適度に間引く
                     .Subscribe();
 
-                void OnScrollViewerOnScrollChanged(object s, MouseWheelEventArgs e)
+                void OnScrollViewerOnScrollChanged(object s, ScrollChangedEventArgs e)
                 {
-                    if(e.Delta < 0)
-                    {
-                        // スクロール割合を計算
-                        var scrollRatio = (scrollViewer.VerticalOffset + scrollViewer.ViewportHeight) / scrollViewer.ExtentHeight;
+                    // スクロール割合を計算
+                    var scrollRatio = (scrollViewer.VerticalOffset + scrollViewer.ViewportHeight) / scrollViewer.ExtentHeight;
 
-                        if (scrollRatio >= 0.995) // 計算誤差がでることがあるので調整
-                        {
-                            // 末端あたりまでスクロールした段階で仮想テーブルにデータをロードする
-                            Provider?.Stage(10);
-                        }
+                    if (scrollRatio >= 0.9) // 計算誤差がでることがあるので調整
+                    {
+                        // 末端あたりまでスクロールした段階で仮想テーブルにデータをロードする
+                        Provider?.Stage(6);
                     }
                 }
             };
@@ -82,7 +79,7 @@ namespace LocalImageViewer.WPF
         public static T FindChild<T>(this FrameworkElement root, Func<FrameworkElement, bool> compare = null) 
             where T : FrameworkElement
         {
-            compare  = compare ?? (x => true);
+            compare ??= (x => true);
             
             var children = Enumerable.Range(0, VisualTreeHelper.GetChildrenCount(root)).Select(x => VisualTreeHelper.GetChild(root, x)).OfType<FrameworkElement>().ToArray();
 

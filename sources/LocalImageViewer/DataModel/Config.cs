@@ -44,6 +44,8 @@ namespace LocalImageViewer.DataModel
         /// </summary>
         public Dictionary<Guid, string[]> TagMap { get; set; } = new();
 
+        public int LastDownloadStartIndex { get; set; } = 0;
+
         /// <summary>
         /// 設定ファイルの保存パス
         /// </summary>

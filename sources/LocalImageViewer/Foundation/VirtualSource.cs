@@ -1,38 +1,57 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reactive.Concurrency;
-using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
-using Reactive.Bindings;
-using Reactive.Bindings.Extensions;
 namespace LocalImageViewer.Foundation
 {
     public class VirtualCollectionSource<T,U> : IVirtualCollectionProvider , IDisposable
     {
         private readonly DataSource<T> _dataSource;
+        private readonly Func<T, U> _converter;
         private readonly List<T> _proxy;
         private readonly int _initialSize;
-        private readonly Subject<CollectionChanged<T>> _collectionChangedTrigger;
-        private Func<T, bool> _filter;
+        private Func<T, bool> _filter = _=>true;
         private CancellationTokenSource _prevCancelToken;
         private IList<IDisposable> Disposables { get; }= new List<IDisposable>();
-        public ReadOnlyReactiveCollection<U> Items { get; }
+        public ObservableCollection<U> Items { get; }
         public int ProxySize => _proxy.Count;
         public int SourceSize => _dataSource.SafeList.Count;
         public event EventHandler CollectionReset;
 
-        public VirtualCollectionSource(DataSource<T> dataSource, Func<T,U> converter ,int initialSize , IScheduler scheduler)
+        public VirtualCollectionSource(DataSource<T> dataSource, Func<T,U> converter ,int initialSize)
         {
             _dataSource = dataSource;
-            _dataSource.OnManualAdded += async (s, e) => await ResetCollectionAsync();
+            _converter = converter;
             _proxy = new List<T>(dataSource.SafeList);
             _initialSize = initialSize;
+            Items = new ObservableCollection<U>(_proxy.Take(initialSize).Select(converter));
 
-            var source = _proxy.Take(initialSize).ToArray();
-            _collectionChangedTrigger = new Subject<CollectionChanged<T>>().AddTo(Disposables);
-            Items = source.ToReadOnlyReactiveCollection(_collectionChangedTrigger,converter,scheduler, false ).AddTo(Disposables);
+            _dataSource.OnDataSourceCleared += (s, e) =>
+            {
+                UpdateProxy();
+            };
+
+            _dataSource.OnDataSourceManualAdded += (s, e) =>
+            {
+                if (e.Index is 0)
+                {
+                    #if false // UX敵にfilterするのが良いかは悩みどころ。
+                    T[] filtered = e.Data.Where(_filter).ToArray();]
+                    #endif
+                    T[] filtered = e.Data.ToArray();
+                    if (filtered.Length is not 0)
+                    {
+                        _proxy.InsertRange(0,filtered);
+                        Items.AddRangeHead(filtered.Select(_converter));
+                    }
+                }
+                else
+                {
+                    UpdateProxy();
+                }
+            };
         }
 
         /// <summary>
@@ -41,7 +60,14 @@ namespace LocalImageViewer.Foundation
         /// <param name="filter"></param>
         public void SetFilter(Func<T, bool> filter)
         {
-            _filter = filter;
+            if (filter is null)
+            {
+                _filter = _ => true;
+            }
+            else
+            {
+                _filter = filter;
+            }
         }
 
         /// <summary>
@@ -58,7 +84,7 @@ namespace LocalImageViewer.Foundation
                 array = array.Where(x =>
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    return _filter?.Invoke(x) ?? true;
+                    return _filter(x);
                 }).ToArray();
             },cancellationToken);
             
@@ -69,7 +95,7 @@ namespace LocalImageViewer.Foundation
         private void UpdateProxy()
         {
             var array = _dataSource.SafeList.ToArray();
-            array = array.Where(x => _filter?.Invoke(x) ?? true).ToArray();
+            array = array.Where(_filter).ToArray();
 
             _proxy.Clear();
             _proxy.AddRange(array);
@@ -97,18 +123,23 @@ namespace LocalImageViewer.Foundation
                 return;
             }
 
-            _collectionChangedTrigger.OnNext(CollectionChanged<T>.Reset);
-            int i = 0;
-            foreach (var item in _proxy.Take(_initialSize).ToArray())
+            foreach (var disposable in Items.OfType<IDisposable>())
             {
-                _collectionChangedTrigger.OnNext(CollectionChanged<T>.Add(i++,item));
+                disposable.Dispose();
             }
+
+            Items.Reset(_proxy.Take(_initialSize).Select(_converter));
 
             CollectionReset?.Invoke(this,EventArgs.Empty);
             _prevCancelToken.Dispose();
             _prevCancelToken = null;
         }
 
+        public void ResetCollection()
+        {
+            UpdateProxy();
+            Items.Reset(_proxy.Take(_initialSize).Select(_converter));
+        }
 
         /// <summary>
         /// Proxyからn分のデータをItemsにステージします。
@@ -123,20 +154,9 @@ namespace LocalImageViewer.Foundation
             {
                 UpdateProxy();
             }
-            var result = false;
-            for (int i = 0; i < n; ++i)
-            {
-                var index = currentIndex + i;
-                if(fixedProxy.Length <= index )
-                {
-                    break;
-                }
-                result = true;
-                _collectionChangedTrigger.OnNext(
-                    CollectionChanged<T>.Add(index,fixedProxy[index]));
-            }
 
-            return result;
+            Items.AddRange(fixedProxy.Skip(currentIndex).Take(n).Select(_converter));
+            return true;
         }
         public void Dispose()
         {
@@ -148,7 +168,7 @@ namespace LocalImageViewer.Foundation
     }
     public class VirtualCollectionSource<T> : VirtualCollectionSource<T,T>
     {
-        public VirtualCollectionSource(DataSource<T> dataSource, int initialSize, IScheduler scheduler) : base(dataSource, x=>x, initialSize, scheduler)
+        public VirtualCollectionSource(DataSource<T> dataSource, int initialSize) : base(dataSource, x=>x, initialSize)
         {
         }
     }

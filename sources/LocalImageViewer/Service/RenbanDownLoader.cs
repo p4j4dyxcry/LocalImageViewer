@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using LocalImageViewer.DataModel;
 using LocalImageViewer.Foundation;
 using Reactive.Bindings;
+using Reactive.Bindings.Extensions;
 using YiSA.Foundation.Common;
 using YiSA.Foundation.Logging;
 namespace LocalImageViewer.Service
@@ -20,19 +22,26 @@ namespace LocalImageViewer.Service
         private readonly Project _project;
         private readonly Config _config;
         private readonly ILogger _logger;
+        private readonly HttpClientService _httpClientService;
         public IReactiveProperty<string> Address { get; } = new ReactiveProperty<string>(string.Empty);
-        public IReactiveProperty<int> Start { get; } = new ReactiveProperty<int>(0);
+        public IReactiveProperty<int> Start { get; } = new ReactiveProperty<int>();
         public IReactiveProperty<int> End { get; } = new ReactiveProperty<int>();
         public IReactiveProperty<string> DownloadLogInfo { get; } = new ReactiveProperty<string>();
         public IReactiveProperty<string> DownloadDirectoryName { get; } = new ReactiveProperty<string>(string.Empty);
 
         public IReactiveProperty<int> FillZeroCount { get; } = new ReactivePropertySlim<int>(0);
         
-        public RenbanDownLoader(Project project , Config config , ILogger logger)
+        public RenbanDownLoader(Project project , Config config , ILogger logger,HttpClientService httpClientService)
         {
             _project = project;
             _config = config;
             _logger = logger;
+            _httpClientService = httpClientService;
+            Start.Value = config.LastDownloadStartIndex;
+            Start
+                .Where(x=> x != config.LastDownloadStartIndex)
+                .Do(x => config.LastDownloadStartIndex = x)
+                .Subscribe();
         }
 
         public async Task DownLoad(params string[] uris)
@@ -52,7 +61,6 @@ namespace LocalImageViewer.Service
             Directory.CreateDirectory(absoluteDir);
             _logger.WriteLine($"try create directory {absoluteDir}");
 
-            using var client = new HttpClient();
             int pageId = 0;
             foreach (var uri in uris)
             {
@@ -67,7 +75,7 @@ namespace LocalImageViewer.Service
                     try
                     {
                         _logger.WriteLine($"try download {pageUri}");
-                        await client.DownloadToFile(pageUri,filePath);
+                        await _httpClientService.Client.DownloadToFile(pageUri,filePath);
                         DownloadLogInfo.Value += $"OK {pageUri}\n";
                         _logger.WriteLine($"success download {pageUri}");
                         await Task.Delay(50);
@@ -87,14 +95,13 @@ namespace LocalImageViewer.Service
             }
             
             // ダウンロード完了、ドキュメントをメイン画面に追加する
-            _project.DocumentSource.Insert(0,new ImageDocument(new DocumentMetaData()
+            _project.DocumentSource.InsertRangeHead(new ImageDocument(new DocumentMetaData()
             {
                 Type = DocumentTypeHelper.FileExtensionToType(Path.GetExtension(uris[0])),
                 DisplayName = string.Empty,
                 LatestSavedAbsolutePath = Path.Combine(absoluteDir,"meta.yml"),
                 DirectoryAbsolutePath = absoluteDir,
                 ProjectAbsolutePath = _config.Project,
-                IsEdited = true,
             },_config));
         }
 
@@ -125,8 +132,7 @@ namespace LocalImageViewer.Service
         {
             try
             {
-                using var client = new HttpClient();
-                var bytes = await client.GetByteArrayAsync(uri);
+                var bytes = await _httpClientService.Client.GetByteArrayAsync(uri);
                 var image = await ImageSourceHelper.LoadThumbnailFromByteAsync(bytes, 128, 128);
                 return image;
             }

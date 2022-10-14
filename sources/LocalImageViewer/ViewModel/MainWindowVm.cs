@@ -1,6 +1,6 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reactive.Concurrency;
 using System.Windows.Input;
 using LocalImageViewer.DataModel;
 using LocalImageViewer.Foundation;
@@ -20,14 +20,21 @@ namespace LocalImageViewer.ViewModel
         public ReadOnlyReactiveCollection<RecentVm> Recent { get; }
         public VirtualCollectionSource<ImageDocument,DocumentVm> DocumentSource { get; }
 
-        public ReadOnlyReactiveCollection<DocumentVm> Documents => DocumentSource.Items;
+        public ObservableCollection<DocumentVm> Documents => DocumentSource.Items;
         public ICommand<string> AddTagCommand { get; }
         public ICommand ShowRenbanEditorCommand { get; }
         public ICommand ShowDocumentCommand { get; }
         public ICommand ShowTagEditorCommand { get; }
         public ICommand ReloadCommand { get; }
         
-        public MainWindowVm(ConfigService configService , Project project ,ThumbnailService thumbnailService , IWindowService windowService , DocumentOperator documentOperator,ImageDocumentFilterService imageDocumentFilterService , ILogger logger)
+        public MainWindowVm(ConfigService configService ,
+            Project project ,
+            ThumbnailService thumbnailService ,
+            IWindowService windowService ,
+            DocumentOperator documentOperator,
+            ImageDocumentFilterService imageDocumentFilterService ,
+            HttpClientService httpClientService,
+            ILogger logger)
         {
             // ドキュメントの非同期読み込み
             _ = project.LoadDocumentAsync(30);
@@ -37,7 +44,7 @@ namespace LocalImageViewer.ViewModel
                 configService.ReloadRecent();
             };
 
-            DocumentSource = new VirtualCollectionSource<ImageDocument, DocumentVm>(project.DocumentSource,x => new DocumentVm(x, documentOperator, thumbnailService,false),30,DispatcherScheduler.Current);
+            DocumentSource = new VirtualCollectionSource<ImageDocument, DocumentVm>(project.DocumentSource,x => new DocumentVm(x, documentOperator, thumbnailService,false),30);
             DocumentSource.SetFilter(imageDocumentFilterService.Filter);
 
             Tags = configService.Tags.ToReadOnlyReactiveCollection(x =>
@@ -88,7 +95,7 @@ namespace LocalImageViewer.ViewModel
             
             ShowRenbanEditorCommand = new DelegateCommand( () =>
             {
-                var editor = new RenbanDownLoader(project, configService.Config,logger);
+                var editor = new RenbanDownLoader(project, configService.Config,logger,httpClientService);
                 var dataContext = new RenbanVm(editor);
                 windowService.Show<RenbanDownloadWindow,RenbanVm>(dataContext,WindowOpenOption.Default);
             });

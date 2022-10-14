@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using YamlDotNet.Serialization;
 namespace LocalImageViewer.DataModel
@@ -35,12 +36,62 @@ namespace LocalImageViewer.DataModel
         /// ページサイズ
         /// </summary>
         public int PageSize { get; set; }
+
+        public int LatestPage { get; set; }
         
         [YamlIgnore] public string ProjectAbsolutePath { get; set; }
         [YamlIgnore] public string DirectoryAbsolutePath { get; set; }
         [YamlIgnore] public string LatestSavedAbsolutePath { get; set; }
-        [YamlIgnore] public bool IsEdited { get; set; }
+        [YamlIgnore] public bool IsManualEdited { get; set; }
+
+        public bool IsEdited(DocumentMetaData origin)
+        {
+            if (origin is null)
+            {
+                return true;
+            }
+            if (DisplayName != origin.DisplayName)
+            {
+                return true;
+            }
+            if (Type != origin.Type)
+            {
+                return true;
+            }
+            if (PageSize != origin.PageSize)
+            {
+                return true;
+            }
+            if (LatestPage != origin.LatestPage)
+            {
+                return true;
+            }
+            if (Tags?.Length != origin.Tags?.Length)
+            {
+                return true;
+            }
+            for (int i = 0; i < (Tags?.Length ?? 0); ++i)
+            {
+                if (Tags![i] != origin.Tags![i])
+                {
+                    return false;
+                }
+            }
+            if (File.Exists(LatestSavedAbsolutePath) is false)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public DocumentMetaData ShallowCopy()
+        {
+            return (DocumentMetaData)MemberwiseClone();
+        }
+
     }
+
 
     /// <summary>
     /// サポート予定のドキュメントの種類

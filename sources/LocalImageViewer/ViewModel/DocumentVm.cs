@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using LocalImageViewer.DataModel;
 using LocalImageViewer.Service;
-using Reactive.Bindings;
 using Reactive.Bindings.Extensions;
 using YiSA.WPF.Command;
 using YiSA.WPF.Common;
@@ -21,10 +20,21 @@ namespace LocalImageViewer.ViewModel
             get => GetThumbnailPath();
             private set => TrySetProperty(ref _largeThumbnail, value);
         }
-        
-        public IReactiveProperty<string> Page1 { get; } = new ReactiveProperty<string>();
-        public IReactiveProperty<string> Page2 { get; } = new ReactiveProperty<string>();
-        
+
+        private string _page1;
+        public string Page1
+        {
+            get => _page1 ??= Document.GetCurrentPage().page1;
+            private set => TrySetProperty(ref _page1, value);
+        }
+
+        private string _page2;
+        public string Page2
+        {
+            get => _page2 ??= Document.GetCurrentPage().page2;
+            private set => TrySetProperty(ref _page2, value);
+        }
+
         public TagEditorVm TagEditorVm { get; }
         
         public ICommand ToNextCommand { get; }
@@ -45,20 +55,19 @@ namespace LocalImageViewer.ViewModel
             _documentOperator = documentOperator;
             _thumbnailService = thumbnailService;
             DisplayName = document.DisplayName;
-            Page1.Value = document.Pages[0];
 
             ToNextCommand = new DelegateCommand(() =>
             {
-                var tuple = document.SeekNextPage();
-                Page1.Value = tuple[0];
-                Page2.Value = tuple[1];
+                var (p1,p2) = document.SeekNextPage();
+                Page1 = p1;
+                Page2 = p2;
             });
             
             ToPrevCommand = new DelegateCommand(() =>
             {
-                var tuple = document.SeekPrevPage();
-                Page1.Value = tuple[0];
-                Page2.Value = tuple[1];
+                var (p1,p2) = document.SeekPrevPage();
+                Page1 = p1;
+                Page2 = p2;
             });
 
             ShowWithExplorerCommand = new DelegateCommand(() =>

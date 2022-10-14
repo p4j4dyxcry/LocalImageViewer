@@ -12,8 +12,8 @@
 
     <WrapPanel HorizontalAlignment="Center"
                VerticalAlignment="Center">
-        <Image Source="{Binding Page1.Value, Converter={extension:FileToImage}}" />
-        <Image Source="{Binding Page2.Value, Converter={extension:FileToImage}}" />
+        <Image Source="{Binding Page1, Converter={extension:FileToImage}}" />
+        <Image Source="{Binding Page2, Converter={extension:FileToImage}}" />
     </WrapPanel>
 
 </mah:MetroWindow>

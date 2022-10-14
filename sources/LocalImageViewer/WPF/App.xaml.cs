@@ -33,6 +33,7 @@ namespace LocalImageViewer.WPF
             container.RegisterSingleton<DocumentOperator>();
             container.RegisterSingleton<MainWindowVm>(); 
             container.RegisterSingleton<ImageDocumentFilterService>();
+            container.RegisterSingleton<HttpClientService>();
             
         #if DEBUG
             container.Verify();

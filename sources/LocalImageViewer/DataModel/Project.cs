@@ -22,7 +22,7 @@ namespace LocalImageViewer.DataModel
         public bool IsLoading => _tokenSource is not null;
 
         public DataSource<ImageDocument> DocumentSource { get; } = new();
-        public IReadOnlyCollection<ImageDocument> Documents => DocumentSource.Items;
+        public IReadOnlyCollection<ImageDocument> Documents => DocumentSource.SafeList;
 
         public event EventHandler DocumentLoaded;
 
@@ -42,10 +42,11 @@ namespace LocalImageViewer.DataModel
 
         private void SaveDocuments()
         {
-            foreach (var metaData in Documents.Select(x=>x.MetaData))
+            foreach (var doc in Documents)
             {
-                if (metaData.IsEdited)
+                if (doc.IsEditedMetaData())
                 {
+                    var metaData = doc.MetaData;
                     YamlSerializeHelper.SaveToFile(metaData.LatestSavedAbsolutePath,metaData);
                     _logger.WriteLine($"saved meta data {metaData.LatestSavedAbsolutePath}");
                 }
@@ -92,7 +93,6 @@ namespace LocalImageViewer.DataModel
             {
                 DisplayName = Path.GetFileNameWithoutExtension(absolutePath),
                 Type = DocumentTypeHelper.FileExtensionToType(Path.GetExtension(title).ToLower()),
-                IsEdited = true,
                 LatestSavedAbsolutePath = metaDataFilePath,
                 ProjectAbsolutePath = _config.Project,
                 DirectoryAbsolutePath = absolutePath,
