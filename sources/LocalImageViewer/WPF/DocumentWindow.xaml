@@ -4,16 +4,16 @@
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
-                 xmlns:extension="clr-namespace:YiSA.Markup.Extension;assembly=YiSA.Markup"
                  xmlns:viewModel="clr-namespace:LocalImageViewer.ViewModel"
+                 xmlns:foundation="clr-namespace:LocalImageViewer.Foundation"
                  mc:Ignorable="d"
                  d:DataContext="{d:DesignInstance viewModel:DocumentVm}"
                  Title="{Binding DisplayName}">
 
     <WrapPanel HorizontalAlignment="Center"
                VerticalAlignment="Center">
-        <Image Source="{Binding Page1, Converter={extension:FileToImage}}" />
-        <Image Source="{Binding Page2, Converter={extension:FileToImage}}" />
+        <Image Source="{Binding Page1, Converter={foundation:FilePathToImage}}" />
+        <Image Source="{Binding Page2, Converter={foundation:FilePathToImage}}" />
     </WrapPanel>
 
 </mah:MetroWindow>

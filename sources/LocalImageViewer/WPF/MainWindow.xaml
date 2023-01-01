@@ -10,6 +10,7 @@
                  xmlns:ext="clr-namespace:YiSA.Markup.Extension;assembly=YiSA.Markup"
                  xmlns:wpf="clr-namespace:LocalImageViewer.WPF"
                  xmlns:viewModel="clr-namespace:LocalImageViewer.ViewModel"
+                 xmlns:foundation="clr-namespace:LocalImageViewer.Foundation"
                  d:DataContext="{d:DesignInstance viewModel:MainWindowVm}"
                  x:Name="MainWindowRoot"
                  Title="Local ImageViewer"
@@ -47,7 +48,7 @@
                                             Command="{Binding DataContext.ShowDocumentCommand ,Source={x:Reference MainWindowRoot}}"/>
                                     </b:Interaction.Behaviors>
                    
-                                    <Image Source="{Binding Thumbnail,Converter={ext:FileToImage}}"  Width="45.25" Height="64"/>
+                                    <Image Source="{Binding Thumbnail,Converter={foundation:FilePathToImage}}"  Width="45.25" Height="64"/>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -114,7 +115,7 @@
                             </ContextMenu>
                         </Border.ContextMenu>
                         <Grid>
-                            <Image Source="{Binding LargeThumbnailPath,Converter={ext:FileToImage}}" Width="210" Height="297" />
+                            <Image Source="{Binding LargeThumbnailPath,Converter={foundation:FilePathToImage}}" Width="210" Height="297" />
 
                             <Button HorizontalAlignment="Right"
                                     BorderThickness="0"

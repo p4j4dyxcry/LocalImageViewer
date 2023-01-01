@@ -7,6 +7,7 @@
         xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:wpf="clr-namespace:LocalImageViewer.WPF"
         xmlns:extension="clr-namespace:YiSA.Markup.Extension;assembly=YiSA.Markup"
+        xmlns:foundation="clr-namespace:LocalImageViewer.Foundation"
         d:DataContext="{d:DesignInstance viewModel:TagEditWindowVm}"
         mc:Ignorable="d"
         Title="TagEditWindow" Height="840" Width="1280">
@@ -37,7 +38,7 @@
                             <ColumnDefinition/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-                        <Image Source="{Binding LargeThumbnailPath,Converter={extension:FileToImage}}" Width="70" Height="99"/>
+                        <Image Source="{Binding LargeThumbnailPath,Converter={foundation:FilePathToImage}}" Width="70" Height="99"/>
                         <ItemsControl
                             Grid.Column="1"
                             Margin="5"

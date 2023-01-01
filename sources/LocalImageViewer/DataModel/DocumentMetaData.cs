@@ -108,7 +108,7 @@ namespace LocalImageViewer.DataModel
     {
         private static readonly IReadOnlyDictionary<DocumentType, string[]> Map = new Dictionary<DocumentType, string[]>()
         {
-            {DocumentType.Img,    new []{".jpg",".jpeg",".png"}},
+            {DocumentType.Img,    new []{".jpg",".jpeg",".png",".webp"}},
             {DocumentType.Pdf,    new []{".pdf"}},        // 未対応
             {DocumentType.Archive,new []{".zip",".rar"}}, // 未対応
         };

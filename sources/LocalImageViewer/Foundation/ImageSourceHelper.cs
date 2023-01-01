@@ -18,6 +18,27 @@ namespace LocalImageViewer.Foundation
             await using var memoryStream = new MemoryStream();
             await magickImage.WriteAsync(memoryStream);
 
+            return MemoryStreamToImageSource(memoryStream);
+        }
+
+        public static ImageSource GetImageSource(byte[] bytes)
+        {
+            var magickImage = new MagickImage(bytes);
+
+            using var memoryStream = new MemoryStream();
+            magickImage.Write(memoryStream);
+
+            return MemoryStreamToImageSource(memoryStream);
+        }
+
+        public static ImageSource GetImageSource(string filePath)
+        {
+            byte[] bytes = File.ReadAllBytes(filePath);
+            return GetImageSource(bytes);
+        }
+
+        public static ImageSource MemoryStreamToImageSource(MemoryStream memoryStream)
+        {
             var image = new BitmapImage();
             memoryStream.Position = 0;
             image.BeginInit();
@@ -29,5 +50,6 @@ namespace LocalImageViewer.Foundation
 
             return image;
         }
+
     }
 }
