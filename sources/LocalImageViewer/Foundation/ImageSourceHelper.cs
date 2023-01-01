@@ -37,6 +37,22 @@ namespace LocalImageViewer.Foundation
             return GetImageSource(bytes);
         }
 
+        public static async Task<ImageSource> GetImageSourceAsync(byte[] bytes)
+        {
+            var magickImage = new MagickImage(bytes);
+
+            await using var memoryStream = new MemoryStream();
+            await magickImage.WriteAsync(memoryStream);
+
+            return MemoryStreamToImageSource(memoryStream);
+        }
+
+        public static async Task<ImageSource> GetImageSourceAsync(string filePath)
+        {
+            byte[] bytes = await File.ReadAllBytesAsync(filePath);
+            return await GetImageSourceAsync(bytes);
+        }
+
         public static ImageSource MemoryStreamToImageSource(MemoryStream memoryStream)
         {
             var image = new BitmapImage();
