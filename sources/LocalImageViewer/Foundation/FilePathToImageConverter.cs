@@ -26,7 +26,7 @@ namespace LocalImageViewer.Foundation
                     ImageSource imageSource = FilePathToImageCache.ConvertCore(filePath);
                     FilePathToImageCache.Register(filePath,imageSource);
 
-                    return result;
+                    return imageSource;
                 }
                 catch
                 {
@@ -61,7 +61,6 @@ namespace LocalImageViewer.Foundation
 
         public static async Task RegisterCacheAsync(string[] filePaths)
         {
-            List<(string, ImageSource)> keyValues = new();
             foreach (var path in filePaths)
             {
                 var img = await ConvertCoreAsync(path);
