@@ -1,10 +1,14 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Resources;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ImageMagick;
 using LocalImageViewer.DataModel;
+using LocalImageViewer.Foundation;
 using YiSA.WPF.Common;
 namespace LocalImageViewer.Service
 {
@@ -14,11 +18,17 @@ namespace LocalImageViewer.Service
     /// </summary>
     public class ThumbnailService : DisposableBindable
     {
-        public static ImageSource NoneImageSource { get; } = CreateImageSourceFromFile("Resources/loading.png");
+        public static ImageSource NoneImageSource { get; } = CreateLoadingImage();
 
-        private static ImageSource CreateImageSourceFromFile(string path)
+        private static ImageSource CreateLoadingImage()
         {
-            return new BitmapImage(new Uri(path,UriKind.Relative));
+            var assembly = Assembly.GetExecutingAssembly();
+            var resource = Assembly.GetExecutingAssembly()
+                .GetManifestResourceNames()
+                .First(x=> x == "LocalImageViewer.Resources.loading.png");
+
+            var stream = assembly.GetManifestResourceStream(resource);
+            return ImageSourceHelper.MemoryStreamToImageSource(stream);
         }
         
         private readonly Config _config;

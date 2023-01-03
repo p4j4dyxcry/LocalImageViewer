@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
 using System.Windows.Media;
+using LocalImageViewer.Service;
 namespace LocalImageViewer.Foundation
 {
     [ValueConversion(typeof(string), typeof(TaskCompletionNotifier<ImageSource>))]
@@ -41,7 +42,7 @@ namespace LocalImageViewer.Foundation
                         }
                     },TaskContinuationOptions.None);
 
-                    return new TaskCompletionNotifier<ImageSource>(task,null);
+                    return new TaskCompletionNotifier<ImageSource>(task,ThumbnailService.NoneImageSource);
                 }
                 catch
                 {
@@ -97,16 +98,6 @@ namespace LocalImageViewer.Foundation
             }
         }
 
-        public static ImageSource ConvertCore(string filePath)
-        {
-            if (CanSUsingSimpleConverter(filePath))
-            {
-                return SimpleConverter.Convert(filePath, typeof(ImageSource),default!,CultureInfo.CurrentCulture) as ImageSource;
-            }
-
-            return ImageSourceHelper.GetThumbnailFromFilePathByPercent(filePath,0.5d);
-        }
-
         public static async Task<ImageSource> ConvertCoreAsync(string filePath)
         {
             if (CanSUsingSimpleConverter(filePath))
@@ -114,7 +105,7 @@ namespace LocalImageViewer.Foundation
                 return await Task.Run(() => SimpleConverter.Convert(filePath, typeof(ImageSource), default!, CultureInfo.CurrentCulture) as ImageSource);
             }
 
-            return await ImageSourceHelper.GetThumbnailFromFilePathByPercentAsync(filePath,0.5d);
+            return await ImageSourceHelper.GetImageSourceAsync(filePath,0.5d);
         }
 
         public static bool CanSUsingSimpleConverter(string filePath)

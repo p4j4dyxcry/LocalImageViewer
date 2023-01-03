@@ -22,7 +22,7 @@
 
     <ItemGroup>
       <None Remove="Resource\loading.png" />
-      <Resource Include="Resources\loading.png" />
+      <EmbeddedResource Include="Resources\loading.png" />
     </ItemGroup>
 
     <ItemGroup>

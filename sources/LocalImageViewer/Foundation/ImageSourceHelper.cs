@@ -10,79 +10,33 @@ namespace LocalImageViewer.Foundation
     /// </summary>
     public static class ImageSourceHelper
     {
-        public static async Task<ImageSource> GetThumbnailFromFilePathByPercentAsync(string filePath, double percent)
+        public static async Task<ImageSource> GetImageSourceAsync(string filePath, double scale = 1.0)
         {
-            byte[] bytes = await File.ReadAllBytesAsync(filePath);
-
-            using var magickImage = new MagickImage(bytes);
-            await Task.Run(() =>
+            return await Task.Run(async () =>
             {
-                magickImage.Thumbnail((int)(magickImage.Width * percent), (int)(magickImage.Height * percent));
+                using MagickImage magickImage =  new MagickImage(filePath);
+                if (scale is not 1.0)
+                {
+                    magickImage.Thumbnail((int)(magickImage.Width * scale), (int)(magickImage.Height * scale));
+                }
+                await using var memoryStream = new MemoryStream();
+                await magickImage.WriteAsync(memoryStream);
+                return MemoryStreamToImageSource(memoryStream);
             });
-
-            await using var memoryStream = new MemoryStream();
-            await magickImage.WriteAsync(memoryStream);
-
-            return await Task.Run(() => MemoryStreamToImageSource(memoryStream));
         }
-
-        public static ImageSource GetThumbnailFromFilePathByPercent(string filePath, double percent)
-        {
-            byte[] bytes = File.ReadAllBytes(filePath);
-
-            using var magickImage = new MagickImage(bytes);
-            magickImage.Thumbnail((int)(magickImage.Width * percent),  (int)(magickImage.Height * percent));
-
-            using var memoryStream = new MemoryStream();
-            magickImage.Write(memoryStream);
-
-            return MemoryStreamToImageSource(memoryStream);
-        }
-
         public static async Task<ImageSource> GetThumbnailFromByteAsync(byte[] bytes, int w, int h)
         {
-            using var magickImage = new MagickImage(bytes);
-            magickImage.Thumbnail(w, h);
-
-            await using var memoryStream = new MemoryStream();
-            await magickImage.WriteAsync(memoryStream);
-
-            return MemoryStreamToImageSource(memoryStream);
+            return await Task.Run(async () =>
+            {
+                using var magickImage = new MagickImage(bytes);
+                magickImage.Thumbnail(w, h);
+                await using var memoryStream = new MemoryStream();
+                await magickImage.WriteAsync(memoryStream);
+                return MemoryStreamToImageSource(memoryStream);
+            });
         }
 
-        public static ImageSource GetImageSource(byte[] bytes)
-        {
-            using var magickImage = new MagickImage(bytes);
-
-            using var memoryStream = new MemoryStream();
-            magickImage.Write(memoryStream);
-
-            return MemoryStreamToImageSource(memoryStream);
-        }
-
-        public static ImageSource GetImageSource(string filePath)
-        {
-            byte[] bytes = File.ReadAllBytes(filePath);
-            return GetImageSource(bytes);
-        }
-
-        public static async Task<ImageSource> GetImageSourceAsync(byte[] bytes)
-        {
-            using var magickImage = new MagickImage(bytes);
-
-            await using var memoryStream = new MemoryStream();
-            await magickImage.WriteAsync(memoryStream);
-
-            return MemoryStreamToImageSource(memoryStream);
-        }
-
-        public static async Task<ImageSource> GetImageSourceAsync(string filePath)
-        {
-            byte[] bytes = await File.ReadAllBytesAsync(filePath);
-            return await GetImageSourceAsync(bytes);
-        }
-
-        public static ImageSource MemoryStreamToImageSource(MemoryStream memoryStream)
+        public static ImageSource MemoryStreamToImageSource(Stream memoryStream)
         {
             var image = new BitmapImage();
             memoryStream.Position = 0;
