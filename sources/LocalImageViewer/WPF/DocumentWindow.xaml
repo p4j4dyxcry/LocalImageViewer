@@ -10,10 +10,11 @@
                  d:DataContext="{d:DesignInstance viewModel:DocumentVm}"
                  Title="{Binding DisplayName}">
 
-    <WrapPanel HorizontalAlignment="Center"
-               VerticalAlignment="Center">
+    <StackPanel HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               Orientation="Horizontal">
         <Image DataContext="{Binding Page1, Converter={foundation:FilePathToImageAsync}}" Source="{Binding Value}" />
         <Image DataContext="{Binding Page2, Converter={foundation:FilePathToImageAsync}}" Source="{Binding Value}" />
-    </WrapPanel>
+    </StackPanel>
 
 </mah:MetroWindow>

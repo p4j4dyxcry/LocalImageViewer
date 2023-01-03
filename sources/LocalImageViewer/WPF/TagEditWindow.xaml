@@ -28,22 +28,22 @@
 
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <WrapPanel ItemWidth="250" ItemHeight="100"/>
+                    <WrapPanel ItemWidth="400" ItemHeight="100"/>
                 </ItemsPanelTemplate>
             </ListBox.ItemsPanel>
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="viewModel:DocumentVm">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Image DataContext="{Binding LargeThumbnailPath,Converter={foundation:FilePathToImageAsync}}" Source="{Binding Value}" Width="70" Height="99"/>
                         <ItemsControl
                             Grid.Column="1"
                             Margin="5"
                             DataContext="{Binding TagEditorVm}"
-                            ItemsSource="{Binding Tags}" MinWidth="40" MinHeight="18" MaxWidth="280">
+                            ItemsSource="{Binding Tags}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <WrapPanel />
