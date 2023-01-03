@@ -52,7 +52,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <CheckBox IsChecked="{Binding IsEnable.Value , Mode=TwoWay}"
-                                              Width="50"
+                                              Width="100"
                                               Content="{Binding Name}" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

@@ -1,3 +1,4 @@
+using System;
 using System.Windows.Input;
 using LocalImageViewer.ViewModel;
 namespace LocalImageViewer.WPF
@@ -24,6 +25,11 @@ namespace LocalImageViewer.WPF
                 {
                     ToPage(Key.Right);
                 }
+            };
+
+            this.Closed += (s, e) =>
+            {
+                GC.Collect();
             };
         }
 

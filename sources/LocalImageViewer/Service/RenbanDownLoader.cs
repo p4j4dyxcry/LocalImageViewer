@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,7 +8,6 @@ using System.Windows.Media;
 using LocalImageViewer.DataModel;
 using LocalImageViewer.Foundation;
 using Reactive.Bindings;
-using Reactive.Bindings.Extensions;
 using YiSA.Foundation.Common;
 using YiSA.Foundation.Logging;
 namespace LocalImageViewer.Service
@@ -133,7 +131,7 @@ namespace LocalImageViewer.Service
             try
             {
                 var bytes = await _httpClientService.Client.GetByteArrayAsync(uri);
-                var image = await ImageSourceHelper.LoadThumbnailFromByteAsync(bytes, 128, 128);
+                var image = await ImageSourceHelper.GetThumbnailFromByteAsync(bytes, 128, 128);
                 return image;
             }
             catch

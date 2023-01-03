@@ -10,9 +10,35 @@ namespace LocalImageViewer.Foundation
     /// </summary>
     public static class ImageSourceHelper
     {
-        public static async Task<ImageSource> LoadThumbnailFromByteAsync(byte[] bytes, int w, int h)
+        public static async Task<ImageSource> GetThumbnailFromFilePathByPercentAsync(string filePath, double percent)
         {
-            var magickImage = new MagickImage(bytes);
+            byte[] bytes = await File.ReadAllBytesAsync(filePath);
+
+            using var magickImage = new MagickImage(bytes);
+            magickImage.Thumbnail((int)(magickImage.Width * percent),  (int)(magickImage.Height * percent));
+
+            await using var memoryStream = new MemoryStream();
+            await magickImage.WriteAsync(memoryStream);
+
+            return await Task.Run(() => MemoryStreamToImageSource(memoryStream));
+        }
+
+        public static ImageSource GetThumbnailFromFilePathByPercent(string filePath, double percent)
+        {
+            byte[] bytes = File.ReadAllBytes(filePath);
+
+            using var magickImage = new MagickImage(bytes);
+            magickImage.Thumbnail((int)(magickImage.Width * percent),  (int)(magickImage.Height * percent));
+
+            using var memoryStream = new MemoryStream();
+            magickImage.Write(memoryStream);
+
+            return MemoryStreamToImageSource(memoryStream);
+        }
+
+        public static async Task<ImageSource> GetThumbnailFromByteAsync(byte[] bytes, int w, int h)
+        {
+            using var magickImage = new MagickImage(bytes);
             magickImage.Thumbnail(w, h);
 
             await using var memoryStream = new MemoryStream();
@@ -23,7 +49,7 @@ namespace LocalImageViewer.Foundation
 
         public static ImageSource GetImageSource(byte[] bytes)
         {
-            var magickImage = new MagickImage(bytes);
+            using var magickImage = new MagickImage(bytes);
 
             using var memoryStream = new MemoryStream();
             magickImage.Write(memoryStream);
@@ -39,7 +65,7 @@ namespace LocalImageViewer.Foundation
 
         public static async Task<ImageSource> GetImageSourceAsync(byte[] bytes)
         {
-            var magickImage = new MagickImage(bytes);
+            using var magickImage = new MagickImage(bytes);
 
             await using var memoryStream = new MemoryStream();
             await magickImage.WriteAsync(memoryStream);
@@ -63,6 +89,7 @@ namespace LocalImageViewer.Foundation
             image.UriSource = null;
             image.StreamSource = memoryStream;
             image.EndInit();
+            image.Freeze();
 
             return image;
         }

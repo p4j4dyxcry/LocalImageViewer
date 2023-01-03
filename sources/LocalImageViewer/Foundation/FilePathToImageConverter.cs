@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,7 +6,6 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
 using System.Windows.Media;
-using System.Windows.Shapes;
 namespace LocalImageViewer.Foundation
 {
     public class FilePathToImageConverter: IValueConverter
@@ -25,7 +22,10 @@ namespace LocalImageViewer.Foundation
                     }
 
                     ImageSource imageSource = FilePathToImageCache.ConvertCore(filePath);
-                    FilePathToImageCache.Register(filePath,imageSource);
+                    if (FilePathToImageCache.CanNotUsingSimpleConverter(filePath))
+                    {
+                        FilePathToImageCache.Register(filePath,imageSource);
+                    }
 
                     return imageSource;
                 }
@@ -47,8 +47,9 @@ namespace LocalImageViewer.Foundation
 
     public static class FilePathToImageCache
     {
+        private const int CacheCapacity = 80;
         private static readonly YiSA.Markup.Converters.FilePathToImageConverter SimpleConverter = new();
-        private static readonly LruCache<string, ImageSource> LruCache = new(400);
+        private static readonly LruCache<string, ImageSource> LruCache = new(CacheCapacity);
 
         public static bool TryGet(string path,out ImageSource result)
         {
@@ -60,8 +61,21 @@ namespace LocalImageViewer.Foundation
             LruCache.Add(path, value);
         }
 
-        public static async Task RegisterCacheAsync(string[] filePaths)
+        public static async Task RegisterCacheAsync(string[] filePaths,string current)
         {
+            int index = filePaths.ToList().IndexOf(current);
+
+            if (index is not -1)
+            {
+                int previousPageLoadNum = CacheCapacity / 4;
+                int start = Math.Max(0, index - CacheCapacity - previousPageLoadNum);
+                filePaths = filePaths.Skip(start).Take(CacheCapacity).ToArray();
+            }
+            else
+            {
+                filePaths = filePaths.Take(CacheCapacity).ToArray();
+            }
+
             foreach (var path in filePaths.Where(CanNotUsingSimpleConverter))
             {
                 var img = await ConvertCoreAsync(path);
@@ -76,7 +90,7 @@ namespace LocalImageViewer.Foundation
                 return SimpleConverter.Convert(filePath, typeof(ImageSource),default!,CultureInfo.CurrentCulture) as ImageSource;
             }
 
-            return ImageSourceHelper.GetImageSource(filePath);
+            return ImageSourceHelper.GetThumbnailFromFilePathByPercent(filePath,0.5d);
         }
 
         public static async Task<ImageSource> ConvertCoreAsync(string filePath)
@@ -86,10 +100,10 @@ namespace LocalImageViewer.Foundation
                 return SimpleConverter.Convert(filePath, typeof(ImageSource),default!,CultureInfo.CurrentCulture) as ImageSource;
             }
 
-            return await ImageSourceHelper.GetImageSourceAsync(filePath);
+            return await ImageSourceHelper.GetThumbnailFromFilePathByPercentAsync(filePath,0.5d);
         }
 
-        private static bool CanSUsingSimpleConverter(string filePath)
+        public static bool CanSUsingSimpleConverter(string filePath)
         {
             string lowerPath = filePath.ToLower();
             if (lowerPath.EndsWith("png") ||
@@ -101,7 +115,7 @@ namespace LocalImageViewer.Foundation
             return false;
         }
 
-        private static bool CanNotUsingSimpleConverter(string filePath)
+        public static bool CanNotUsingSimpleConverter(string filePath)
         {
             return !CanSUsingSimpleConverter(filePath);
         }
