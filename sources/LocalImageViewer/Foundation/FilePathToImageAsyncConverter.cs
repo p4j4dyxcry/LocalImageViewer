@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,26 +9,39 @@ using System.Windows.Markup;
 using System.Windows.Media;
 namespace LocalImageViewer.Foundation
 {
-    public class FilePathToImageConverter: IValueConverter
+    [ValueConversion(typeof(string), typeof(TaskCompletionNotifier<ImageSource>))]
+    public class FilePathToImageAsyncConverter: IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is string filePath)
             {
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    return TaskCompletionNotifier<ImageSource>.Default;
+                }
+
                 try
                 {
                     if (FilePathToImageCache.TryGet(filePath, out var result))
                     {
-                        return result;
+                        return new TaskCompletionNotifier<ImageSource>(result);
                     }
 
-                    ImageSource imageSource = FilePathToImageCache.ConvertCore(filePath);
-                    if (FilePathToImageCache.CanNotUsingSimpleConverter(filePath))
+                    Task<ImageSource> task = FilePathToImageCache.ConvertCoreAsync(filePath);
+
+                    task.ContinueWith((t) =>
                     {
-                        FilePathToImageCache.Register(filePath,imageSource);
-                    }
+                        if (t.IsCompletedSuccessfully)
+                        {
+                            if (FilePathToImageCache.CanNotUsingSimpleConverter(filePath))
+                            {
+                                FilePathToImageCache.Register(filePath, t.Result);
+                            }
+                        }
+                    },TaskContinuationOptions.None);
 
-                    return imageSource;
+                    return new TaskCompletionNotifier<ImageSource>(task,null);
                 }
                 catch
                 {
@@ -97,7 +111,7 @@ namespace LocalImageViewer.Foundation
         {
             if (CanSUsingSimpleConverter(filePath))
             {
-                return SimpleConverter.Convert(filePath, typeof(ImageSource),default!,CultureInfo.CurrentCulture) as ImageSource;
+                return await Task.Run(() => SimpleConverter.Convert(filePath, typeof(ImageSource), default!, CultureInfo.CurrentCulture) as ImageSource);
             }
 
             return await ImageSourceHelper.GetThumbnailFromFilePathByPercentAsync(filePath,0.5d);
@@ -121,12 +135,13 @@ namespace LocalImageViewer.Foundation
         }
     }
 
-    public class FilePathToImageExtension: MarkupExtension
+    [MarkupExtensionReturnType(typeof(FilePathToImageAsyncConverter))]
+    public class FilePathToImageAsyncExtension: MarkupExtension
     {
-        private static FilePathToImageConverter? _converter;
+        private static FilePathToImageAsyncConverter? _converter;
         public override object ProvideValue( IServiceProvider serviceProvider )
         {
-            return _converter ??= new FilePathToImageConverter();
+            return _converter ??= new FilePathToImageAsyncConverter();
         }
     }
 }

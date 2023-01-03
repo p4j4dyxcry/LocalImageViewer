@@ -15,7 +15,10 @@ namespace LocalImageViewer.Foundation
             byte[] bytes = await File.ReadAllBytesAsync(filePath);
 
             using var magickImage = new MagickImage(bytes);
-            magickImage.Thumbnail((int)(magickImage.Width * percent),  (int)(magickImage.Height * percent));
+            await Task.Run(() =>
+            {
+                magickImage.Thumbnail((int)(magickImage.Width * percent), (int)(magickImage.Height * percent));
+            });
 
             await using var memoryStream = new MemoryStream();
             await magickImage.WriteAsync(memoryStream);

@@ -73,7 +73,6 @@ namespace LocalImageViewer.ViewModel
                 
                 if (args is DocumentVm documentVm)
                 {
-                    _ = FilePathToImageCache.RegisterCacheAsync(documentVm.Document.Pages,documentVm.Page1);
                     windowService.Show<DocumentWindow,DocumentVm>(documentVm,option);
                     configService.AddRecent(documentVm.Document.MetaData.Id);
                 }
@@ -83,7 +82,6 @@ namespace LocalImageViewer.ViewModel
                     var context = Documents.FirstOrDefault(x => x.Document.MetaData.Id == recentVm.Document?.MetaData.Id);
                     if(context != null)
                     {
-                        _ = FilePathToImageCache.RegisterCacheAsync(context.Document.Pages,context.Page1);
                         windowService.Show<DocumentWindow,DocumentVm>(context,option);
                     }
                 }

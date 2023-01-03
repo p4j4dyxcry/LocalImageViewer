@@ -38,7 +38,7 @@
                             <ColumnDefinition/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-                        <Image Source="{Binding LargeThumbnailPath,Converter={foundation:FilePathToImage}}" Width="70" Height="99"/>
+                        <Image DataContext="{Binding LargeThumbnailPath,Converter={foundation:FilePathToImageAsync}}" Source="{Binding Value}" Width="70" Height="99"/>
                         <ItemsControl
                             Grid.Column="1"
                             Margin="5"
