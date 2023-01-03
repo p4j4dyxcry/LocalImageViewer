@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
@@ -47,7 +48,7 @@ namespace LocalImageViewer.Foundation
     public static class FilePathToImageCache
     {
         private static readonly YiSA.Markup.Converters.FilePathToImageConverter SimpleConverter = new();
-        private static readonly LruCache<string, ImageSource> LruCache = new(200);
+        private static readonly LruCache<string, ImageSource> LruCache = new(400);
 
         public static bool TryGet(string path,out ImageSource result)
         {
@@ -61,7 +62,7 @@ namespace LocalImageViewer.Foundation
 
         public static async Task RegisterCacheAsync(string[] filePaths)
         {
-            foreach (var path in filePaths)
+            foreach (var path in filePaths.Where(CanNotUsingSimpleConverter))
             {
                 var img = await ConvertCoreAsync(path);
                 LruCache.Add(path,img);
@@ -70,11 +71,7 @@ namespace LocalImageViewer.Foundation
 
         public static ImageSource ConvertCore(string filePath)
         {
-            string lowerPath = filePath.ToLower();
-            ImageSource result = null;
-            if (lowerPath.EndsWith("png") ||
-                lowerPath.EndsWith("jpeg") ||
-                lowerPath.EndsWith("jpg"))
+            if (CanSUsingSimpleConverter(filePath))
             {
                 return SimpleConverter.Convert(filePath, typeof(ImageSource),default!,CultureInfo.CurrentCulture) as ImageSource;
             }
@@ -84,15 +81,29 @@ namespace LocalImageViewer.Foundation
 
         public static async Task<ImageSource> ConvertCoreAsync(string filePath)
         {
-            string lowerPath = filePath.ToLower();
-            if (lowerPath.EndsWith("png") ||
-                lowerPath.EndsWith("jpeg") ||
-                lowerPath.EndsWith("jpg"))
+            if (CanSUsingSimpleConverter(filePath))
             {
                 return SimpleConverter.Convert(filePath, typeof(ImageSource),default!,CultureInfo.CurrentCulture) as ImageSource;
             }
 
             return await ImageSourceHelper.GetImageSourceAsync(filePath);
+        }
+
+        private static bool CanSUsingSimpleConverter(string filePath)
+        {
+            string lowerPath = filePath.ToLower();
+            if (lowerPath.EndsWith("png") ||
+                lowerPath.EndsWith("jpeg") ||
+                lowerPath.EndsWith("jpg"))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private static bool CanNotUsingSimpleConverter(string filePath)
+        {
+            return !CanSUsingSimpleConverter(filePath);
         }
     }
 
