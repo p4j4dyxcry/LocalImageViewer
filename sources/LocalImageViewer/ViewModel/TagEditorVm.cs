@@ -21,11 +21,12 @@ namespace LocalImageViewer.ViewModel
 
             Tags = configService.Tags.ToReadOnlyReactiveCollection(x =>
                 {
-                    var result = new TagItemVm(new TagData(x.Tag, documentTags.Contains(x.Tag)));
+                    var tag = new TagData(x.Tag, documentTags.Contains(x.Tag));
+                    var result = new TagItemVm(tag);
 
                     if (autoTagsSync)
                     {
-                        result.PropertyChangedAsObservable()
+                        tag.PropertyChangedAsObservable()
                             .Subscribe(x=>ApplyCommand?.Execute(null)).AddTo(Disposables);
                     }
 
