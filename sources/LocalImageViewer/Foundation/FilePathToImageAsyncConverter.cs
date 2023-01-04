@@ -129,7 +129,7 @@ namespace LocalImageViewer.Foundation
     [MarkupExtensionReturnType(typeof(FilePathToImageAsyncConverter))]
     public class FilePathToImageAsyncExtension: MarkupExtension
     {
-        private static FilePathToImageAsyncConverter? _converter;
+        private static FilePathToImageAsyncConverter _converter;
         public override object ProvideValue( IServiceProvider serviceProvider )
         {
             return _converter ??= new FilePathToImageAsyncConverter();

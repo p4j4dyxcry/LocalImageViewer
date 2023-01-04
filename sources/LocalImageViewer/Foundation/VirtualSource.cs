@@ -17,14 +17,14 @@ namespace LocalImageViewer.Foundation
         private IList<IDisposable> Disposables { get; }= new List<IDisposable>();
         public ObservableCollection<U> Items { get; }
         public int ProxySize => _proxy.Count;
-        public int SourceSize => _dataSource.SafeList.Count;
+        public int SourceSize => _dataSource.SnapshotItems.Count;
         public event EventHandler CollectionReset;
 
         public VirtualCollectionSource(DataSource<T> dataSource, Func<T,U> converter ,int initialSize)
         {
             _dataSource = dataSource;
             _converter = converter;
-            _proxy = new List<T>(dataSource.SafeList);
+            _proxy = new List<T>(dataSource.SnapshotItems);
             _initialSize = initialSize;
             Items = new ObservableCollection<U>(_proxy.Take(initialSize).Select(converter));
 
@@ -80,7 +80,7 @@ namespace LocalImageViewer.Foundation
             var array = Array.Empty<T>();
             await Task.Run(() =>
             {
-                array = _dataSource.SafeList.ToArray();
+                array = _dataSource.SnapshotItems.ToArray();
                 array = array.Where(x =>
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -94,7 +94,7 @@ namespace LocalImageViewer.Foundation
 
         private void UpdateProxy()
         {
-            var array = _dataSource.SafeList.ToArray();
+            var array = _dataSource.SnapshotItems.ToArray();
             array = array.Where(_filter).ToArray();
 
             _proxy.Clear();

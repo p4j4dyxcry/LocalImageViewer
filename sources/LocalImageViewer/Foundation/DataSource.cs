@@ -20,8 +20,7 @@ namespace LocalImageViewer.Foundation
 
     public class DataSource<T> : IDisposable
     {
-        public IReadOnlyList<T> Items => _list;
-        public IReadOnlyList<T> SafeList
+        public IReadOnlyList<T> SnapshotItems
         {
             get
             {
@@ -31,9 +30,9 @@ namespace LocalImageViewer.Foundation
         }
 
         private readonly List<T> _list = new();
-        private readonly ConcurrentQueue<IEnumerable<T>> _queue = new();
-        private CancellationTokenSource _cancellationTokenSource = new();
+        private readonly ConcurrentQueue<IEnumerable<T>> _enumeratorQueue = new();
         private readonly SlimLocker _locker = new();
+        private CancellationTokenSource _cancellationTokenSource = new();
         public bool IsLoading { get; private set; }
 
         public event EventHandler<DataSourceUpdatedEventArgs<T>> OnDataSourceManualAdded;
@@ -43,9 +42,14 @@ namespace LocalImageViewer.Foundation
         /// enumeratorはワーカースレッドから列挙されます。
         /// </summary>
         /// <returns></returns>
-        public async Task ReadAsync(IEnumerable<T> enumerator, int initial)
+        public async Task ReadAsync(IEnumerable<T> enumerator, int requirementOfInitialSize)
         {
-            _queue.Enqueue(enumerator);
+            if (enumerator is null)
+            {
+                return;
+            }
+
+            _enumeratorQueue.Enqueue(enumerator);
             if (IsLoading)
             {
                 return;
@@ -53,21 +57,19 @@ namespace LocalImageViewer.Foundation
 
             using var loading = StartLoading();
 
-            _queue.TryDequeue(out var currentEnumerator);
-            if (initial > 0)
+            if (!_enumeratorQueue.TryDequeue(out var currentEnumerator))
+            {
+                return;
+            }
+
+            if (requirementOfInitialSize > 0)
             {
                 using var _ = _locker.WriteLock();
-                int take = 0;
+                int actualRequestSize = requirementOfInitialSize - _list.Count;
                 var enumerable = currentEnumerator as T[] ?? currentEnumerator?.ToArray() ?? ArraySegment<T>.Empty;
-                foreach (var data in enumerable)
-                {
-                    if (_list.Count < initial)
-                    {
-                        ++take;
-                        _list.Add(data);
-                    }
-                }
-                currentEnumerator = enumerable.Skip(take);
+
+                _list.AddRange(enumerable.Take(actualRequestSize));
+                currentEnumerator = enumerable.Skip(actualRequestSize);
             }
 
             var cancelToken = _cancellationTokenSource.Token;
@@ -75,11 +77,6 @@ namespace LocalImageViewer.Foundation
             {
                 do
                 {
-                    if (currentEnumerator is null)
-                    {
-                        return;
-                    }
-
                     foreach (var data in currentEnumerator)
                     {
                         if (cancelToken.IsCancellationRequested)
@@ -91,11 +88,11 @@ namespace LocalImageViewer.Foundation
                     }
                     if (cancelToken.IsCancellationRequested)
                     {
-                        _queue.Clear();
+                        _enumeratorQueue.Clear();
                         break;
                     }
                 }
-                while (_queue.TryDequeue(out currentEnumerator));
+                while (_enumeratorQueue.TryDequeue(out currentEnumerator));
             }, cancelToken);
         }
 
@@ -107,6 +104,7 @@ namespace LocalImageViewer.Foundation
 
             using var _ = _locker.WriteLock();
             _list.Clear();
+            OnDataSourceCleared?.Invoke(this,EventArgs.Empty);
         }
 
         public void AddRange(params T[] items)

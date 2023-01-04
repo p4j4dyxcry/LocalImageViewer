@@ -22,7 +22,7 @@ namespace LocalImageViewer.DataModel
         public bool IsLoading => _tokenSource is not null;
 
         public DataSource<ImageDocument> DocumentSource { get; } = new();
-        public IReadOnlyCollection<ImageDocument> Documents => DocumentSource.SafeList;
+        public IReadOnlyCollection<ImageDocument> Documents => DocumentSource.SnapshotItems;
 
         public event EventHandler DocumentLoaded;
 
@@ -109,7 +109,7 @@ namespace LocalImageViewer.DataModel
             {
                 _tokenSource?.Cancel();
                 _tokenSource = null;
-                if (DocumentSource.SafeList.Any())
+                if (DocumentSource.SnapshotItems.Any())
                 {
                     SaveDocuments();
                     DocumentSource.Clear();

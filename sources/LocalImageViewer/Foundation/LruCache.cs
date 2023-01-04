@@ -1,15 +1,15 @@
 ﻿using System.Collections.Generic;
-using System.Threading;
+
 namespace LocalImageViewer.Foundation
 {
     public class LruCache<TKey, TValue>
     {
-        private record LruCacheItem<TKey, TValue>(TKey Key, TValue Value);
+        private record LruCacheItem(TKey Key, TValue Value);
         private readonly int _capacity;
-        private readonly Dictionary<TKey, LinkedListNode<LruCacheItem<TKey, TValue>>> _cacheMap = new();
-        private readonly LinkedList<LruCacheItem<TKey, TValue>> _lruList = new();
+        private readonly Dictionary<TKey, LinkedListNode<LruCacheItem>> _cacheMap = new();
+        private readonly LinkedList<LruCacheItem> _lruList = new();
 
-        private SlimLocker _cacheLock = new ();
+        private readonly SlimLocker _cacheLock = new ();
 
         public LruCache(int capacity)
         {
@@ -69,8 +69,8 @@ namespace LocalImageViewer.Foundation
                 RemoveFirstInternal();
             }
 
-            LruCacheItem<TKey, TValue> cacheItem = new LruCacheItem<TKey, TValue>(key, value);
-            LinkedListNode<LruCacheItem<TKey, TValue>> node = new LinkedListNode<LruCacheItem<TKey, TValue>>(cacheItem);
+            LruCacheItem cacheItem = new (key, value);
+            LinkedListNode<LruCacheItem> node = new LinkedListNode<LruCacheItem>(cacheItem);
             _lruList.AddLast(node);
             _cacheMap[key] = node;
         }
@@ -78,7 +78,7 @@ namespace LocalImageViewer.Foundation
         private void RemoveFirstInternal()
         {
             // Remove from LRUPriority
-            LinkedListNode<LruCacheItem<TKey, TValue>> node = _lruList.First;
+            LinkedListNode<LruCacheItem> node = _lruList.First;
             _lruList.RemoveFirst();
 
             // Remove from cache
